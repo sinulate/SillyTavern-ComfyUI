@@ -126,7 +126,7 @@ async function loadSettings() {
     $("#kazuma_compress").prop("checked", extension_settings[extensionName].compressImages);
 	
 	$("#kazuma_profile_strategy").val(extension_settings[extensionName].profileStrategy || "current");
-toggleProfileVisibility();
+    toggleProfileVisibility();
 
     updateSliderInput('kazuma_steps', 'kazuma_steps_val', extension_settings[extensionName].steps);
     updateSliderInput('kazuma_cfg', 'kazuma_cfg_val', extension_settings[extensionName].cfg);
@@ -866,7 +866,62 @@ jQuery(async () => {
 });
 
 // Helpers (Condensed)
-function onMessageReceived(id) { if (!extension_settings[extensionName].enabled || !extension_settings[extensionName].autoGenEnabled) return; const chat = getContext().chat; if (!chat || !chat.length) return; if (chat[chat.length - 1].is_user || chat[chat.length - 1].is_system) return; const aiMsgCount = chat.filter(m => !m.is_user && !m.is_system).length; const freq = parseInt(extension_settings[extensionName].autoGenFreq) || 1; if (aiMsgCount % freq === 0) { console.log(`[${extensionName}] Auto-gen...`); setTimeout(onGeneratePrompt, 500); } }
+/* --- NEW INJECTION LISTENER --- */
+async function onMessageReceived(id) {
+    // 1. Basic Safety Checks
+    if (!extension_settings[extensionName].enabled) return;
+    
+    const context = getContext();
+    const chat = context.chat;
+    if (!chat || !chat.length) return;
+
+    // Get the most recent message
+    const lastMsgIndex = chat.length - 1;
+    let lastMsg = chat[lastMsgIndex];
+
+    // Ignore User messages (we only want to generate from AI output)
+    if (lastMsg.is_user) return;
+
+    // 2. THE DETECTION LOGIC (Regex)
+    // Looks for anything between <comfyui> tags. 
+    // The [\s\S]*? ensures it captures multi-line text (English + Chinese).
+    const regex = /<comfyui>([\s\S]*?)<\/comfyui>/i;
+    const match = lastMsg.mes.match(regex);
+
+    if (match) {
+        console.log(`[${extensionName}] Injection Tag Detected!`);
+        
+        // 3. EXTRACTION
+        const extractedPrompt = match[1].trim();
+        
+        // 4. THE "ACTIVE HIDE"
+        // We modify the message content to remove the tag so it doesn't clutter the chat.
+        const cleanMessage = lastMsg.mes.replace(match[0], "").trim();
+        
+        // Update the message in memory
+        chat[lastMsgIndex].mes = cleanMessage;
+        
+        // Save to SillyTavern storage
+        await saveChat();
+        
+        // Force a UI refresh so the tag disappears from your screen immediately
+        if (typeof reloadCurrentChat === "function") {
+            await reloadCurrentChat();
+        }
+
+        // 5. EXECUTION
+        // Send the extracted text directly to the ComfyUI handler.
+        // We pass 'null' as the target so it adds a new message/image to the chat.
+        console.log(`[${extensionName}] Sending extracted prompt to ComfyUI...`);
+        await generateWithComfy(extractedPrompt, null);
+    } 
+    else {
+        // Optional: If no tag is found, do nothing.
+        // The old "Auto-Gen Frequency" logic is now bypassed.
+        console.log(`[${extensionName}] No <comfyui> tag found. Skipping generation.`);
+    }
+}
+
 function createChatButton() { if ($("#kazuma_quick_gen").length > 0) return; const b = `<div id="kazuma_quick_gen" class="interactable" title="Visualize" style="cursor: pointer; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; margin-right: 5px; opacity: 0.7;"><i class="fa-solid fa-paintbrush fa-lg"></i></div>`; let t = $("#send_but_sheld"); if (!t.length) t = $("#send_textarea"); if (t.length) { t.attr("id") === "send_textarea" ? t.before(b) : t.prepend(b); } }
 function populateProfiles() { const s=$("#kazuma_profile"),o=$("#settings_preset_openai").find("option");s.empty().append('<option value="">-- Use Current Settings --</option>');if(o.length)o.each(function(){s.append(`<option value="${$(this).val()}">${$(this).text()}</option>`)});if(extension_settings[extensionName].connectionProfile)s.val(extension_settings[extensionName].connectionProfile);}
 async function onFileSelected(e) { const f=e.target.files[0];if(!f)return;const t=await f.text();try{const j=JSON.parse(t),n=prompt("Name:",f.name.replace(".json",""));if(n){extension_settings[extensionName].savedWorkflows[n]=j;extension_settings[extensionName].currentWorkflowName=n;saveSettingsDebounced();populateWorkflows();}}catch{toastr.error("Invalid JSON");}$(e.target).val('');}
@@ -941,4 +996,3 @@ function applyWorkflowState(state) {
     $("#kazuma_lora_wt_3").val(s.selectedLoraWt3); $("#kazuma_lora_wt_display_3").text(s.selectedLoraWt3);
     $("#kazuma_lora_wt_4").val(s.selectedLoraWt4); $("#kazuma_lora_wt_display_4").text(s.selectedLoraWt4);
 }
-
