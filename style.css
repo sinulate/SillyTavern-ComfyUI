@@ -1,5 +1,5 @@
 /* Group Containers */
-.kazuma-group {
+.comfyui-group {
     background-color: rgba(0, 0, 0, 0.2);
     border-radius: 8px;
     padding: 12px;
@@ -8,7 +8,7 @@
 }
 
 /* Header Text */
-.kazuma-header {
+.comfyui-header {
     font-weight: 700;
     margin-bottom: 12px;
     color: var(--smart-text-color);
@@ -23,7 +23,7 @@
 }
 
 /* Rows for settings */
-.kazuma-row {
+.comfyui-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -32,7 +32,7 @@
 }
 
 /* Small secondary labels */
-.kazuma-sub-label {
+.comfyui-sub-label {
     font-size: 0.8em;
     opacity: 0.7;
     margin-bottom: 4px;
@@ -41,30 +41,30 @@
 }
 
 /* Slider rows */
-.kazuma-slider-row {
+.comfyui-slider-row {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-bottom: 8px;
 }
-.kazuma-slider-row span {
+.comfyui-slider-row span {
     width: 75px; /* Fixed width so sliders align */
     font-size: 0.85em;
     white-space: nowrap;
 }
-.kazuma-slider-row input[type="range"] {
+.comfyui-slider-row input[type="range"] {
     flex-grow: 1;
 }
 
 /* Modern Accordion / Collapsible */
-.kazuma-details {
+.comfyui-details {
     background-color: rgba(0, 0, 0, 0.15);
     border-radius: 8px;
     margin-bottom: 10px;
     border: 1px solid var(--smart-border-color);
     overflow: hidden;
 }
-.kazuma-details summary {
+.comfyui-details summary {
     padding: 12px;
     cursor: pointer;
     font-weight: 600;
@@ -74,37 +74,37 @@
     align-items: center;
     transition: background 0.2s;
 }
-.kazuma-details summary:hover {
+.comfyui-details summary:hover {
     background-color: rgba(255, 255, 255, 0.05);
 }
 /* Custom arrow using FontAwesome code */
-.kazuma-details summary::after {
+.comfyui-details summary::after {
     content: '\f078';
     font-family: "Font Awesome 6 Free";
     font-weight: 900;
     font-size: 0.8em;
     transition: transform 0.3s;
 }
-.kazuma-details[open] summary::after {
+.comfyui-details[open] summary::after {
     transform: rotate(180deg);
 }
 /* Hide default details marker */
-.kazuma-details summary::-webkit-details-marker { display: none; }
+.comfyui-details summary::-webkit-details-marker { display: none; }
 
-.kazuma-content {
+.comfyui-content {
     padding: 12px;
     background-color: rgba(0, 0, 0, 0.1);
     border-top: 1px solid var(--smart-border-color);
 }
 
 /* LoRa specific styling */
-.kazuma-lora-box {
+.comfyui-lora-box {
     border-left: 2px solid var(--smart-border-color);
     padding-left: 10px;
     margin-bottom: 15px;
 }
 /* Progress Overlay */
-#kazuma_progress_overlay {
+#comfyui_progress_overlay {
     position: fixed;
     bottom: 20px;
     right: 20px;
@@ -120,14 +120,14 @@
     gap: 15px;
 }
 
-#kazuma_progress_text {
+#comfyui_progress_text {
     font-weight: bold;
     font-size: 14px;
     margin-bottom: 5px;
     display: block;
 }
 
-.kazuma-bar-container {
+.comfyui-bar-container {
     width: 100%;
     height: 8px;
     background: rgba(128, 128, 128, 0.3);
@@ -135,16 +135,16 @@
     overflow: hidden;
 }
 
-.kazuma-bar-fill {
+.comfyui-bar-fill {
     height: 100%;
     width: 100%;
     /* Animated Gradient Stripe */
     background: linear-gradient(45deg, var(--smart-theme-color) 25%, transparent 25%, transparent 50%, var(--smart-theme-color) 50%, var(--smart-theme-color) 75%, transparent 75%, transparent);
     background-size: 20px 20px;
-    animation: kazuma-stripe-anim 1s linear infinite;
+    animation: comfyui-stripe-anim 1s linear infinite;
 }
 
-@keyframes kazuma-stripe-anim {
+@keyframes comfyui-stripe-anim {
     0% { background-position: 0 0; }
     100% { background-position: 20px 0; }
 }

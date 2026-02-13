@@ -1,11 +1,11 @@
 {
-  "display_name": "Image Gen Kazuma",
+  "display_name": "ComfyUI Integration",
   "loading_order": 100,
   "requires": [],
   "optional": [],
   "js": "index.js",
   "css": "style.css",
-  "author": "kazuma",
+  "author": "ComfyUI",
   "version": "1.0.0",
   "description": "Advanced ComfyUI integration with Auto-Gen, Swipe-to-Regenerate, Multi-LoRA support, and Custom Workflow management."
 }
