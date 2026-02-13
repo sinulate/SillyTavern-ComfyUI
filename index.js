@@ -6,7 +6,7 @@ import { humanizedDateTime } from "../../../RossAscends-mods.js";
 import { Popup, POPUP_TYPE } from "../../../popup.js";
 
 const extensionName = "Image-gen-comfyui";
-const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
+const extensionFolderPath = import.meta.url.substring(0, import.meta.url.lastIndexOf("/"));
 
 const VISUAL_DIRECTOR_PROTOCOL = `
 [Visual Director Protocol]
