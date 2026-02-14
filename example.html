@@ -1,6 +1,6 @@
 <div class="inline-drawer">
     <div class="inline-drawer-toggle inline-drawer-header">
-        <b>Image Gen ComfyUI</b>
+        <b>Image Gen Kazuma</b>
         <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
     </div>
 
@@ -8,197 +8,192 @@
     <div class="inline-drawer-content">
 
         <!-- MODERN SETTINGS CONTAINER -->
-        <div class="comfyui-settings">
+        <div class="kazuma-settings">
 
             <!-- Group 1: Main Switches -->
-            <div class="comfyui-group">
-                <label class="comfyui-row" title="Turn the extension on/off">
+            <div class="kazuma-group">
+                <label class="kazuma-row" title="Turn the extension on/off">
                     <span><i class="fa-solid fa-power-off"></i> Enable Extension</span>
-                    <input type="checkbox" id="comfyui_enable" />
+                    <input type="checkbox" id="kazuma_enable" />
                 </label>
-                <label class="comfyui-row" title="Fixes lag by compressing images">
+                <label class="kazuma-row" title="Fixes lag by compressing images">
                     <span><i class="fa-solid fa-compress"></i> Compress Images (Fix Lag)</span>
-                    <input type="checkbox" id="comfyui_compress" />
+                    <input type="checkbox" id="kazuma_compress" />
                 </label>
-                <label class="comfyui-row" title="Show prompt popup for editing before generation">
+                <label class="kazuma-row" title="Show prompt popup for editing before generation">
                     <span><i class="fa-solid fa-bug"></i> Diagnostic Mode</span>
-                    <input type="checkbox" id="comfyui_debug" />
+                    <input type="checkbox" id="kazuma_debug" />
                 </label>
             </div>
 
             <!-- Group 2: Automation & Prompting -->
-            <div class="comfyui-group">
-                <div class="comfyui-header"><i class="fa-solid fa-robot"></i> Automation</div>
+            <div class="kazuma-group">
+                <div class="kazuma-header"><i class="fa-solid fa-robot"></i> Automation</div>
 
-                <label class="comfyui-row">
+                <label class="kazuma-row">
                     <span>Auto-Generate</span>
-                    <input type="checkbox" id="comfyui_auto_enable" />
+                    <input type="checkbox" id="kazuma_auto_enable" />
                 </label>
 
-                <label class="comfyui-row" title="Automatically append Visual Director Protocol to system prompt">
-                    <span>Inject Visual Director Protocol</span>
-                    <input type="checkbox" id="comfyui_inject_protocol" />
-                </label>
-
-                <div class="comfyui-row">
+                <div class="kazuma-row">
                     <span>Every X replies:</span>
-                    <input type="number" id="comfyui_auto_freq" class="text_pole" style="width: 60px" min="1" value="1"/>
+                    <input type="number" id="kazuma_auto_freq" class="text_pole" style="width: 60px" min="1" value="1"/>
                 </div>
 
                 <hr style="opacity:0.2; margin: 10px 0;">
 
-                <div class="comfyui-sub-label">Prompt Generator Preset</div>
+                <div class="kazuma-sub-label">Prompt Generator Preset</div>
 
-                <select id="comfyui_profile_strategy" class="text_pole" style="width:100%; margin-bottom: 5px;">
+                <select id="kazuma_profile_strategy" class="text_pole" style="width:100%; margin-bottom: 5px;">
                     <option value="current">Use Current Active Preset</option>
                     <option value="specific">Use Specific Preset...</option>
                 </select>
 
                 <!-- 1. Specific Profile List (Shown ONLY if 'specific') -->
-                <select id="comfyui_profile" class="text_pole" style="width:100%; display:none;"></select>
+                <select id="kazuma_profile" class="text_pole" style="width:100%; display:none;"></select>
 
                 <!-- 2. NEW: Prompt Builder (Shown ONLY if 'current') -->
-                <div id="comfyui_prompt_builder" style="display:none; background:rgba(0,0,0,0.2); padding:10px; border-radius:5px; margin-top:5px; border-left: 2px solid var(--smart-text-color);">
-                    <div class="comfyui-sub-label" style="margin-top:0;">Model Style (Format)</div>
-                    <select id="comfyui_prompt_style" class="text_pole" style="width:100%; margin-bottom:8px;">
+                <div id="kazuma_prompt_builder" style="display:none; background:rgba(0,0,0,0.2); padding:10px; border-radius:5px; margin-top:5px; border-left: 2px solid var(--smart-text-color);">
+                    <div class="kazuma-sub-label" style="margin-top:0;">Model Style (Format)</div>
+                    <select id="kazuma_prompt_style" class="text_pole" style="width:100%; margin-bottom:8px;">
                         <option value="standard">Standard (Descriptive)</option>
                         <option value="illustrious">Illustrious / Pony (Booru Tags)</option>
                         <option value="sdxl">SDXL / Realistic (Natural Prose)</option>
                     </select>
 
-                    <div class="comfyui-sub-label" style="margin-top:0;">Camera Perspective</div>
-                    <select id="comfyui_prompt_persp" class="text_pole" style="width:100%; margin-bottom:8px;">
+                    <div class="kazuma-sub-label" style="margin-top:0;">Camera Perspective</div>
+                    <select id="kazuma_prompt_persp" class="text_pole" style="width:100%; margin-bottom:8px;">
                         <option value="scene">Cinematic Scene (Environmental)</option>
                         <option value="pov">First Person (POV)</option>
                         <option value="character">Character Focus (Portrait)</option>
                     </select>
 
-                    <div class="comfyui-sub-label" style="margin-top:0;">Extra Instructions</div>
-                    <input type="text" id="comfyui_prompt_extra" class="text_pole" style="width:100%" placeholder="e.g. moody lighting, dark atmosphere...">
+                    <div class="kazuma-sub-label" style="margin-top:0;">Extra Instructions</div>
+                    <input type="text" id="kazuma_prompt_extra" class="text_pole" style="width:100%" placeholder="e.g. moody lighting, dark atmosphere...">
                 </div>
             </div>
 
             <!-- Group 3: ComfyUI Connection -->
-            <div class="comfyui-group">
-                <div class="comfyui-header"><i class="fa-solid fa-link"></i> ComfyUI Server</div>
+            <div class="kazuma-group">
+                <div class="kazuma-header"><i class="fa-solid fa-link"></i> ComfyUI Server</div>
 
                 <div style="display:flex; gap: 5px; margin-bottom: 10px;">
-                    <input type="text" id="comfyui_url" class="text_pole" value="http://127.0.0.1:8188" placeholder="API URL" style="flex:1;" />
-                    <button id="comfyui_test_btn" class="menu_button" title="Test Connection"><i class="fa-solid fa-wifi"></i></button>
+                    <input type="text" id="kazuma_url" class="text_pole" value="http://127.0.0.1:8188" placeholder="API URL" style="flex:1;" />
+                    <button id="kazuma_test_btn" class="menu_button" title="Test Connection"><i class="fa-solid fa-wifi"></i></button>
                 </div>
 
-                <div class="comfyui-sub-label">Active Workflow</div>
+                <div class="kazuma-sub-label">Active Workflow</div>
                 <div style="display:flex; gap:5px;">
-                    <select id="comfyui_workflow_list" class="text_pole" style="flex:1"></select>
-                    <button id="comfyui_new_workflow" class="menu_button fa-solid fa-plus" title="New"></button>
-                    <button id="comfyui_edit_workflow" class="menu_button fa-solid fa-pen" title="Edit"></button>
-                    <button id="comfyui_delete_workflow" class="menu_button fa-solid fa-trash" title="Delete"></button>
+                    <select id="kazuma_workflow_list" class="text_pole" style="flex:1"></select>
+                    <button id="kazuma_new_workflow" class="menu_button fa-solid fa-plus" title="New"></button>
+                    <button id="kazuma_edit_workflow" class="menu_button fa-solid fa-pen" title="Edit"></button>
+                    <button id="kazuma_delete_workflow" class="menu_button fa-solid fa-trash" title="Delete"></button>
                 </div>
             </div>
 
             <!-- Collapsible 1: Image Settings -->
-            <details class="comfyui-details" open>
+            <details class="kazuma-details" open>
                 <summary><i class="fa-solid fa-sliders"></i> Image Parameters</summary>
-                <div class="comfyui-content">
-                    <div class="comfyui-sub-label">Checkpoint / Model</div>
-                    <select id="comfyui_model_list" class="text_pole" style="width:100%"></select>
+                <div class="kazuma-content">
+                    <div class="kazuma-sub-label">Checkpoint / Model</div>
+                    <select id="kazuma_model_list" class="text_pole" style="width:100%"></select>
 
-                    <div class="comfyui-row" style="margin-top:10px;">
+                    <div class="kazuma-row" style="margin-top:10px;">
                         <span>Sampler</span>
-                        <select id="comfyui_sampler_list" class="text_pole" style="width: 60%"></select>
+                        <select id="kazuma_sampler_list" class="text_pole" style="width: 60%"></select>
                     </div>
 
                     <hr style="opacity:0.2; margin: 10px 0;">
 
                     <!-- Sliders -->
-                    <div class="comfyui-slider-row">
+                    <div class="kazuma-slider-row">
                         <span>Steps</span>
-                        <input type="range" id="comfyui_steps" min="1" max="100" />
-                        <input type="number" id="comfyui_steps_val" class="text_pole" style="width:50px">
+                        <input type="range" id="kazuma_steps" min="1" max="100" />
+                        <input type="number" id="kazuma_steps_val" class="text_pole" style="width:50px">
                     </div>
 
-                    <div class="comfyui-slider-row">
+                    <div class="kazuma-slider-row">
                         <span>CFG</span>
-                        <input type="range" id="comfyui_cfg" min="1" max="30" step="0.5" />
-                        <input type="number" id="comfyui_cfg_val" class="text_pole" style="width:50px">
+                        <input type="range" id="kazuma_cfg" min="1" max="30" step="0.5" />
+                        <input type="number" id="kazuma_cfg_val" class="text_pole" style="width:50px">
                     </div>
 
-                    <div class="comfyui-slider-row">
+                    <div class="kazuma-slider-row">
                         <span>Denoise</span>
-                        <input type="range" id="comfyui_denoise" min="0" max="1" step="0.05" />
-                        <input type="number" id="comfyui_denoise_val" class="text_pole" style="width:50px">
+                        <input type="range" id="kazuma_denoise" min="0" max="1" step="0.05" />
+                        <input type="number" id="kazuma_denoise_val" class="text_pole" style="width:50px">
                     </div>
 
-                    <div class="comfyui-slider-row">
+                    <div class="kazuma-slider-row">
                         <span>CLIP</span>
-                        <input type="range" id="comfyui_clip" min="1" max="12" step="1" />
-                        <input type="number" id="comfyui_clip_val" class="text_pole" style="width:50px">
+                        <input type="range" id="kazuma_clip" min="1" max="12" step="1" />
+                        <input type="number" id="kazuma_clip_val" class="text_pole" style="width:50px">
                     </div>
 
-                    <div class="comfyui-sub-label">Resolution</div>
-                    <select id="comfyui_resolution_list" class="text_pole" style="width:100%; margin-bottom:5px;"></select>
+                    <div class="kazuma-sub-label">Resolution</div>
+                    <select id="kazuma_resolution_list" class="text_pole" style="width:100%; margin-bottom:5px;"></select>
                     <div style="display:flex; gap:5px; align-items:center;">
-                        <input type="number" id="comfyui_width" class="text_pole" placeholder="W" style="flex:1">
+                        <input type="number" id="kazuma_width" class="text_pole" placeholder="W" style="flex:1">
                         <span>x</span>
-                        <input type="number" id="comfyui_height" class="text_pole" placeholder="H" style="flex:1">
+                        <input type="number" id="kazuma_height" class="text_pole" placeholder="H" style="flex:1">
                     </div>
 
-                     <div class="comfyui-sub-label">Seed (-1 for random)</div>
-                    <input type="number" id="comfyui_seed" class="text_pole" style="width:100%">
+                     <div class="kazuma-sub-label">Seed (-1 for random)</div>
+                    <input type="number" id="kazuma_seed" class="text_pole" style="width:100%">
                 </div>
             </details>
 
             <!-- Collapsible 2: LoRA Lab -->
-            <details class="comfyui-details">
+            <details class="kazuma-details">
                 <summary><i class="fa-solid fa-flask"></i> LoRA Lab (4 Slots)</summary>
-                <div class="comfyui-content">
+                <div class="kazuma-content">
                     <!-- Slot 1 -->
-                    <div class="comfyui-lora-box">
-                        <div class="comfyui-sub-label">LoRA 1</div>
-                        <select id="comfyui_lora_list" class="text_pole" style="width:100%"></select>
-                        <div class="comfyui-slider-row" style="margin-top:5px;">
-                            <span>Wt: <span id="comfyui_lora_wt_display">1.0</span></span>
-                            <input type="range" id="comfyui_lora_wt" min="-2" max="2" step="0.1">
+                    <div class="kazuma-lora-box">
+                        <div class="kazuma-sub-label">LoRA 1</div>
+                        <select id="kazuma_lora_list" class="text_pole" style="width:100%"></select>
+                        <div class="kazuma-slider-row" style="margin-top:5px;">
+                            <span>Wt: <span id="kazuma_lora_wt_display">1.0</span></span>
+                            <input type="range" id="kazuma_lora_wt" min="-2" max="2" step="0.1">
                         </div>
                     </div>
                     <!-- Slot 2 -->
-                     <div class="comfyui-lora-box">
-                        <div class="comfyui-sub-label">LoRA 2</div>
-                        <select id="comfyui_lora_list_2" class="text_pole" style="width:100%"></select>
-                        <div class="comfyui-slider-row" style="margin-top:5px;">
-                            <span>Wt: <span id="comfyui_lora_wt_display_2">1.0</span></span>
-                            <input type="range" id="comfyui_lora_wt_2" min="-2" max="2" step="0.1">
+                     <div class="kazuma-lora-box">
+                        <div class="kazuma-sub-label">LoRA 2</div>
+                        <select id="kazuma_lora_list_2" class="text_pole" style="width:100%"></select>
+                        <div class="kazuma-slider-row" style="margin-top:5px;">
+                            <span>Wt: <span id="kazuma_lora_wt_display_2">1.0</span></span>
+                            <input type="range" id="kazuma_lora_wt_2" min="-2" max="2" step="0.1">
                         </div>
                     </div>
                     <!-- Slot 3 -->
-                    <div class="comfyui-lora-box">
-                        <div class="comfyui-sub-label">LoRA 3</div>
-                        <select id="comfyui_lora_list_3" class="text_pole" style="width:100%"></select>
-                        <div class="comfyui-slider-row" style="margin-top:5px;">
-                            <span>Wt: <span id="comfyui_lora_wt_display_3">1.0</span></span>
-                            <input type="range" id="comfyui_lora_wt_3" min="-2" max="2" step="0.1">
+                    <div class="kazuma-lora-box">
+                        <div class="kazuma-sub-label">LoRA 3</div>
+                        <select id="kazuma_lora_list_3" class="text_pole" style="width:100%"></select>
+                        <div class="kazuma-slider-row" style="margin-top:5px;">
+                            <span>Wt: <span id="kazuma_lora_wt_display_3">1.0</span></span>
+                            <input type="range" id="kazuma_lora_wt_3" min="-2" max="2" step="0.1">
                         </div>
                     </div>
                     <!-- Slot 4 -->
-                    <div class="comfyui-lora-box">
-                        <div class="comfyui-sub-label">LoRA 4</div>
-                        <select id="comfyui_lora_list_4" class="text_pole" style="width:100%"></select>
-                        <div class="comfyui-slider-row" style="margin-top:5px;">
-                            <span>Wt: <span id="comfyui_lora_wt_display_4">1.0</span></span>
-                            <input type="range" id="comfyui_lora_wt_4" min="-2" max="2" step="0.1">
+                    <div class="kazuma-lora-box">
+                        <div class="kazuma-sub-label">LoRA 4</div>
+                        <select id="kazuma_lora_list_4" class="text_pole" style="width:100%"></select>
+                        <div class="kazuma-slider-row" style="margin-top:5px;">
+                            <span>Wt: <span id="kazuma_lora_wt_display_4">1.0</span></span>
+                            <input type="range" id="kazuma_lora_wt_4" min="-2" max="2" step="0.1">
                         </div>
                     </div>
                 </div>
             </details>
 
             <!-- Negative Prompt -->
-            <div class="comfyui-group">
-                <div class="comfyui-header">Negative Prompt Override</div>
-                <textarea id="comfyui_negative" class="text_pole" rows="2" style="width:100%; font-size:12px; margin-top:5px;"></textarea>
+            <div class="kazuma-group">
+                <div class="kazuma-header">Negative Prompt Override</div>
+                <textarea id="kazuma_negative" class="text_pole" rows="2" style="width:100%; font-size:12px; margin-top:5px;"></textarea>
             </div>
 
             <!-- Manual Action -->
-            <button id="comfyui_gen_prompt_btn" class="menu_button" style="width:100%; padding: 10px;">
+            <button id="kazuma_gen_prompt_btn" class="menu_button" style="width:100%; padding: 10px;">
                 <i class="fa-solid fa-bolt"></i> Visualize Last Message
             </button>
         </div>

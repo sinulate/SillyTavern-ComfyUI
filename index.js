@@ -5,43 +5,11 @@ import { saveBase64AsFile } from "../../../utils.js";
 import { humanizedDateTime } from "../../../RossAscends-mods.js";
 import { Popup, POPUP_TYPE } from "../../../popup.js";
 
-const extensionName = "Image-gen-comfyui";
+const extensionName = "Image-gen-kazuma";
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 
-const VISUAL_DIRECTOR_PROTOCOL = `
-[Visual Director Protocol]
-At the end of every response, you must append a silent image generation prompt wrapped in <comfyui> tags. This prompt will drive a First-Person Perspective (POV) visualization of the scene via an Image-to-Image workflow using the character's avatar as a base.
-
-Strictly adhere to the following Prompt Construction Rules:
-
-1. PROXIMITY & SUBJECT (The "She" Rule)
-   - The prompt MUST start with the word "She". Do not use the character's name.
-   - Immediately establish distance from the viewer.
-   - Prioritize the most recent output to determine the current action.
-
-2. CHARACTER APPEARANCE & CONSISTENCY
-   - Detailed Description: You must include relevant details about the character's eyes, hair, facial expression, and clothing.
-   - Change Tracking: Specifically describe any clothing or physical changes that occurred in the scene.
-   - Anatomy: Clearly describe the spatial relationship of visible anatomy (face, neck, chest, hips, arms, thighs, legs) relative to the viewer.
-
-3. ACTION & FRAMING (The "Frame-Exit" Technique)
-   - Rule 1: No Hands. Never mention "fingers" or "palms" unless absolutely necessary (e.g., clutching clothes).
-   - Rule 2: Foreshortening. Use phrases like: "arms extended forward with extreme foreshortening."
-   - Rule 3: Frame Exits. Describe limbs entering from the edge of the frame (e.g., "Right forearm reaches UPWARDS, cut off by the TOP edge").
-   - Rule 4: Contact. If touching the viewer, describe hands "clutching the viewer's clothes" or "pressing against the lens" to anchor them.
-   - Rule 5: Visibility. End this section confirming what is NOT visible (e.g., "Hands are not visible in the shot").
-
-4. BACKGROUND & ENVIRONMENT
-   - Qwen Optimization: The Qwen model requires high detail. Describe lighting (direction, shadows, sources), textures, and environmental objects precisely.
-   - Consistency: Maintain background details from previous prompts unless the character has moved.
-
-5. TECHNICAL DETAILS
-   - Describe the viewer's POV (e.g., "Low angle looking up," "Eye level").
-   - Use relevant quality tags (e.g., "8k, cinematic lighting, photorealistic").
-`;
-
 // --- UPDATED CONSTANTS (With Dscriptions) ---
-const COMFYUI_PLACEHOLDERS = [
+const KAZUMA_PLACEHOLDERS = [
     { key: '"*input*"', desc: "Positive Prompt (Text)" },
     { key: '"*ninput*"', desc: "Negative Prompt (Text)" },
     { key: '"*seed*"', desc: "Seed (Integer)" },
@@ -91,7 +59,6 @@ const defaultWorkflowData = {
 
 const defaultSettings = {
     enabled: true,
-    injectProtocol: false,
     debugPrompt: false,
     comfyUrl: "http://127.0.0.1:8188",
     connectionProfile: "",
@@ -133,39 +100,38 @@ async function loadSettings() {
         }
     }
 
-    $("#comfyui_enable").prop("checked", extension_settings[extensionName].enabled);
-    $("#comfyui_inject_protocol").prop("checked", extension_settings[extensionName].injectProtocol);
-    $("#comfyui_debug").prop("checked", extension_settings[extensionName].debugPrompt);
-    $("#comfyui_url").val(extension_settings[extensionName].comfyUrl);
-    $("#comfyui_width").val(extension_settings[extensionName].imgWidth);
-    $("#comfyui_height").val(extension_settings[extensionName].imgHeight);
-    $("#comfyui_auto_enable").prop("checked", extension_settings[extensionName].autoGenEnabled);
-    $("#comfyui_auto_freq").val(extension_settings[extensionName].autoGenFreq);
+    $("#kazuma_enable").prop("checked", extension_settings[extensionName].enabled);
+    $("#kazuma_debug").prop("checked", extension_settings[extensionName].debugPrompt);
+    $("#kazuma_url").val(extension_settings[extensionName].comfyUrl);
+    $("#kazuma_width").val(extension_settings[extensionName].imgWidth);
+    $("#kazuma_height").val(extension_settings[extensionName].imgHeight);
+    $("#kazuma_auto_enable").prop("checked", extension_settings[extensionName].autoGenEnabled);
+    $("#kazuma_auto_freq").val(extension_settings[extensionName].autoGenFreq);
 	
-    $("#comfyui_prompt_style").val(extension_settings[extensionName].promptStyle || "standard");
-    $("#comfyui_prompt_persp").val(extension_settings[extensionName].promptPerspective || "scene");
-    $("#comfyui_prompt_extra").val(extension_settings[extensionName].promptExtra || "");
+    $("#kazuma_prompt_style").val(extension_settings[extensionName].promptStyle || "standard");
+    $("#kazuma_prompt_persp").val(extension_settings[extensionName].promptPerspective || "scene");
+    $("#kazuma_prompt_extra").val(extension_settings[extensionName].promptExtra || "");
 
-    $("#comfyui_lora_wt").val(extension_settings[extensionName].selectedLoraWt);
-    $("#comfyui_lora_wt_display").text(extension_settings[extensionName].selectedLoraWt);
-    $("#comfyui_lora_wt_2").val(extension_settings[extensionName].selectedLoraWt2);
-    $("#comfyui_lora_wt_display_2").text(extension_settings[extensionName].selectedLoraWt2);
-    $("#comfyui_lora_wt_3").val(extension_settings[extensionName].selectedLoraWt3);
-    $("#comfyui_lora_wt_display_3").text(extension_settings[extensionName].selectedLoraWt3);
-    $("#comfyui_lora_wt_4").val(extension_settings[extensionName].selectedLoraWt4);
-    $("#comfyui_lora_wt_display_4").text(extension_settings[extensionName].selectedLoraWt4);
+    $("#kazuma_lora_wt").val(extension_settings[extensionName].selectedLoraWt);
+    $("#kazuma_lora_wt_display").text(extension_settings[extensionName].selectedLoraWt);
+    $("#kazuma_lora_wt_2").val(extension_settings[extensionName].selectedLoraWt2);
+    $("#kazuma_lora_wt_display_2").text(extension_settings[extensionName].selectedLoraWt2);
+    $("#kazuma_lora_wt_3").val(extension_settings[extensionName].selectedLoraWt3);
+    $("#kazuma_lora_wt_display_3").text(extension_settings[extensionName].selectedLoraWt3);
+    $("#kazuma_lora_wt_4").val(extension_settings[extensionName].selectedLoraWt4);
+    $("#kazuma_lora_wt_display_4").text(extension_settings[extensionName].selectedLoraWt4);
 
-    $("#comfyui_negative").val(extension_settings[extensionName].customNegative);
-    $("#comfyui_seed").val(extension_settings[extensionName].customSeed);
-    $("#comfyui_compress").prop("checked", extension_settings[extensionName].compressImages);
+    $("#kazuma_negative").val(extension_settings[extensionName].customNegative);
+    $("#kazuma_seed").val(extension_settings[extensionName].customSeed);
+    $("#kazuma_compress").prop("checked", extension_settings[extensionName].compressImages);
 	
-	$("#comfyui_profile_strategy").val(extension_settings[extensionName].profileStrategy || "current");
+	$("#kazuma_profile_strategy").val(extension_settings[extensionName].profileStrategy || "current");
     toggleProfileVisibility();
 
-    updateSliderInput('comfyui_steps', 'comfyui_steps_val', extension_settings[extensionName].steps);
-    updateSliderInput('comfyui_cfg', 'comfyui_cfg_val', extension_settings[extensionName].cfg);
-    updateSliderInput('comfyui_denoise', 'comfyui_denoise_val', extension_settings[extensionName].denoise);
-    updateSliderInput('comfyui_clip', 'comfyui_clip_val', extension_settings[extensionName].clipSkip);
+    updateSliderInput('kazuma_steps', 'kazuma_steps_val', extension_settings[extensionName].steps);
+    updateSliderInput('kazuma_cfg', 'kazuma_cfg_val', extension_settings[extensionName].cfg);
+    updateSliderInput('kazuma_denoise', 'kazuma_denoise_val', extension_settings[extensionName].denoise);
+    updateSliderInput('kazuma_clip', 'kazuma_clip_val', extension_settings[extensionName].clipSkip);
 
     populateResolutions();
     populateProfiles();
@@ -177,13 +143,13 @@ function toggleProfileVisibility() {
     const strategy = extension_settings[extensionName].profileStrategy;
 
     // Always show the builder now!
-    $("#comfyui_prompt_builder").show();
+    $("#kazuma_prompt_builder").show();
 
     // Only toggle the preset selector
     if (strategy === "specific") {
-        $("#comfyui_profile").show();
+        $("#kazuma_profile").show();
     } else {
-        $("#comfyui_profile").hide();
+        $("#kazuma_profile").hide();
     }
 }
 
@@ -193,7 +159,7 @@ function updateSliderInput(sliderId, numberId, value) {
 }
 
 function populateResolutions() {
-    const sel = $("#comfyui_resolution_list");
+    const sel = $("#kazuma_resolution_list");
     sel.empty().append('<option value="">-- Select Preset --</option>');
     RESOLUTIONS.forEach((r, idx) => {
         sel.append(`<option value="${idx}">${r.label}</option>`);
@@ -202,7 +168,7 @@ function populateResolutions() {
 
 // --- WORKFLOW MANAGER ---
 async function populateWorkflows() {
-    const sel = $("#comfyui_workflow_list");
+    const sel = $("#kazuma_workflow_list");
     sel.empty();
     try {
         const response = await fetch('/api/sd/comfy/workflows', {
@@ -249,7 +215,7 @@ async function onComfyNewWorkflowClick() {
         if (!res.ok) throw new Error(await res.text());
         toastr.success("Workflow created!");
         await populateWorkflows();
-        $("#comfyui_workflow_list").val(name).trigger('change');
+        $("#kazuma_workflow_list").val(name).trigger('change');
         setTimeout(onComfyOpenWorkflowEditorClick, 500);
     } catch (e) { toastr.error(e.message); }
 }
@@ -330,7 +296,7 @@ async function onComfyOpenWorkflowEditorClick() {
     $textarea.val(currentJsonText);
 
     // Sidebar Generator
-    COMFYUI_PLACEHOLDERS.forEach(item => {
+    KAZUMA_PLACEHOLDERS.forEach(item => {
         const $itemDiv = $('<div></div>')
             .css({
                 'padding': '8px 6px', 'margin-bottom': '6px', 'background-color': 'rgba(0,0,0,0.1)',
@@ -423,9 +389,9 @@ async function onComfyOpenWorkflowEditorClick() {
 // --- FETCH LISTS ---
 async function fetchComfyLists() {
     const comfyUrl = extension_settings[extensionName].comfyUrl;
-    const modelSel = $("#comfyui_model_list");
-    const samplerSel = $("#comfyui_sampler_list");
-    const loraSelectors = [ $("#comfyui_lora_list"), $("#comfyui_lora_list_2"), $("#comfyui_lora_list_3"), $("#comfyui_lora_list_4") ];
+    const modelSel = $("#kazuma_model_list");
+    const samplerSel = $("#kazuma_sampler_list");
+    const loraSelectors = [ $("#kazuma_lora_list"), $("#kazuma_lora_list_2"), $("#kazuma_lora_list_3"), $("#kazuma_lora_list_4") ];
 
     try {
         const modelRes = await fetch('/api/sd/comfy/models', { method: 'POST', headers: getRequestHeaders(), body: JSON.stringify({ url: comfyUrl }) });
@@ -470,10 +436,10 @@ async function onTestConnection() {
     try {
         const result = await fetch('/api/sd/comfy/ping', { method: 'POST', headers: getRequestHeaders(), body: JSON.stringify({ url: url }) });
         if (result.ok) {
-            toastr.success("ComfyUI API connected!", "Image Gen ComfyUI");
+            toastr.success("ComfyUI API connected!", "Image Gen Kazuma");
             await fetchComfyLists();
         } else { throw new Error('ComfyUI returned an error via proxy.'); }
-    } catch (error) { toastr.error(`Connection failed: ${error.message}`, "Image Gen ComfyUI"); }
+    } catch (error) { toastr.error(`Connection failed: ${error.message}`, "Image Gen Kazuma"); }
 }
 
 /* --- UPDATED GENERATION LOGIC --- */
@@ -496,10 +462,10 @@ async function onGeneratePrompt() {
     }
 
     // [START PROGRESS]
-    showComfyUIProgress("Generating Prompt...");
+    showKazumaProgress("Generating Prompt...");
 
     try {
-        toastr.info("Visualizing...", "Image Gen ComfyUI");
+        toastr.info("Visualizing...", "Image Gen Kazuma");
         const lastMessage = context.chat[context.chat.length - 1].mes;
         const s = extension_settings[extensionName];
 
@@ -534,7 +500,7 @@ async function onGeneratePrompt() {
 
         if (s.debugPrompt) {
             // Hide progress while user is confirming
-            hideComfyUIProgress();
+            hideKazumaProgress();
 
             const $content = $(`
                 <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -553,16 +519,16 @@ async function onGeneratePrompt() {
             }
             generatedText = currentText;
             // Show progress again
-            showComfyUIProgress("Sending to ComfyUI...");
+            showKazumaProgress("Sending to ComfyUI...");
         }
 
         // Update progress text
-        showComfyUIProgress("Sending to ComfyUI...");
+        showKazumaProgress("Sending to ComfyUI...");
         await generateWithComfy(generatedText, null);
 
     } catch (err) {
         // [HIDE PROGRESS ON ERROR]
-        hideComfyUIProgress();
+        hideKazumaProgress();
         if (didSwitch) targetDropdown.val(originalProfile).trigger("change");
         console.error(err);
         toastr.error("Generation failed. Check console.");
@@ -591,7 +557,7 @@ async function generateWithComfy(positivePrompt, target = null) {
     workflow = injectParamsIntoWorkflow(workflow, positivePrompt, finalSeed);
 
     try {
-        toastr.info("Sending to ComfyUI...", "Image Gen ComfyUI");
+        toastr.info("Sending to ComfyUI...", "Image Gen Kazuma");
         const res = await fetch(`${url}/prompt`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: workflow }) });
         if(!res.ok) throw new Error("Failed");
         const data = await res.json();
@@ -648,7 +614,7 @@ async function onImageSwiped(data) {
 
     if (direction !== "right") return;
     if (settings && settings.image_overswipe !== "generate") return;
-    if (message.name !== "Image Gen ComfyUI" && message.name !== "Image Gen Kazuma") return;
+    if (message.name !== "Image Gen Kazuma") return;
 
     const media = message.extra?.media || [];
     const idx = message.extra?.media_index || 0;
@@ -659,13 +625,13 @@ async function onImageSwiped(data) {
     if (!mediaObj || !mediaObj.title) return;
 
     const prompt = mediaObj.title;
-    toastr.info("New variation...", "Image Gen ComfyUI");
+    toastr.info("New variation...", "Image Gen Kazuma");
     await generateWithComfy(prompt, { message: message, element: $(element) });
 }
 
 async function waitForGeneration(baseUrl, promptId, positivePrompt, target) {
      // [UPDATE TEXT]
-     showComfyUIProgress("Rendering Image...");
+     showKazumaProgress("Rendering Image...");
 
      const checkInterval = setInterval(async () => {
         try {
@@ -683,15 +649,15 @@ async function waitForGeneration(baseUrl, promptId, positivePrompt, target) {
                 }
                 if (finalImage) {
                     // [UPDATE TEXT]
-                    showComfyUIProgress("Downloading...");
+                    showKazumaProgress("Downloading...");
 
                     const imgUrl = `${baseUrl}/view?filename=${finalImage.filename}&subfolder=${finalImage.subfolder}&type=${finalImage.type}`;
                     await insertImageToChat(imgUrl, positivePrompt, target);
 
                     // [HIDE WHEN DONE]
-                    hideComfyUIProgress();
+                    hideKazumaProgress();
                 } else {
-                    hideComfyUIProgress();
+                    hideKazumaProgress();
                 }
             }
         } catch (e) { }
@@ -719,7 +685,7 @@ function compressImage(base64Str, quality = 0.9) {
 // --- SAVE TO SERVER ---
 async function insertImageToChat(imgUrl, promptText, target = null) {
     try {
-        toastr.info("Downloading image...", "Image Gen ComfyUI");
+        toastr.info("Downloading image...", "Image Gen Kazuma");
         const response = await fetch(imgUrl);
         const blob = await response.blob();
         let base64FullURL = await blobToBase64(blob);
@@ -762,7 +728,7 @@ async function insertImageToChat(imgUrl, promptText, target = null) {
             toastr.success("Gallery updated!");
         } else {
             const newMessage = {
-                name: "Image Gen ComfyUI", is_user: false, is_system: true, send_date: Date.now(),
+                name: "Image Gen Kazuma", is_user: false, is_system: true, send_date: Date.now(),
                 mes: "", extra: { media: [mediaAttachment], media_display: "gallery", media_index: 0, inline_image: false }, force_avatar: "img/five.png"
             };
             context.chat.push(newMessage);
@@ -779,13 +745,13 @@ async function insertImageToChat(imgUrl, promptText, target = null) {
 jQuery(async () => {
     try {
         // 1. INJECT PROGRESS BAR HTML (New Code Here)
-        if ($("#comfyui_progress_overlay").length === 0) {
+        if ($("#kazuma_progress_overlay").length === 0) {
             $("body").append(`
-                <div id="comfyui_progress_overlay">
+                <div id="kazuma_progress_overlay">
                     <div style="flex:1">
-                        <span id="comfyui_progress_text">Generating Image...</span>
-                        <div class="comfyui-bar-container">
-                            <div class="comfyui-bar-fill"></div>
+                        <span id="kazuma_progress_text">Generating Image...</span>
+                        <div class="kazuma-bar-container">
+                            <div class="kazuma-bar-fill"></div>
                         </div>
                     </div>
                 </div>
@@ -795,16 +761,15 @@ jQuery(async () => {
         // 2. Load Settings & Bind Events
         await $.get(`${extensionFolderPath}/example.html`).then(h => $("#extensions_settings2").append(h));
 
-        $("#comfyui_enable").on("change", (e) => { extension_settings[extensionName].enabled = $(e.target).prop("checked"); saveSettingsDebounced(); });
-        $("#comfyui_inject_protocol").on("change", (e) => { extension_settings[extensionName].injectProtocol = $(e.target).prop("checked"); saveSettingsDebounced(); });
-        $("#comfyui_debug").on("change", (e) => { extension_settings[extensionName].debugPrompt = $(e.target).prop("checked"); saveSettingsDebounced(); });
-        $("#comfyui_url").on("input", (e) => { extension_settings[extensionName].comfyUrl = $(e.target).val(); saveSettingsDebounced(); });
-        $("#comfyui_profile").on("change", (e) => { extension_settings[extensionName].connectionProfile = $(e.target).val(); saveSettingsDebounced(); });
-        $("#comfyui_auto_enable").on("change", (e) => { extension_settings[extensionName].autoGenEnabled = $(e.target).prop("checked"); saveSettingsDebounced(); });
-        $("#comfyui_auto_freq").on("input", (e) => { let v = parseInt($(e.target).val()); if(v<1)v=1; extension_settings[extensionName].autoGenFreq = v; saveSettingsDebounced(); });
+        $("#kazuma_enable").on("change", (e) => { extension_settings[extensionName].enabled = $(e.target).prop("checked"); saveSettingsDebounced(); });
+        $("#kazuma_debug").on("change", (e) => { extension_settings[extensionName].debugPrompt = $(e.target).prop("checked"); saveSettingsDebounced(); });
+        $("#kazuma_url").on("input", (e) => { extension_settings[extensionName].comfyUrl = $(e.target).val(); saveSettingsDebounced(); });
+        $("#kazuma_profile").on("change", (e) => { extension_settings[extensionName].connectionProfile = $(e.target).val(); saveSettingsDebounced(); });
+        $("#kazuma_auto_enable").on("change", (e) => { extension_settings[extensionName].autoGenEnabled = $(e.target).prop("checked"); saveSettingsDebounced(); });
+        $("#kazuma_auto_freq").on("input", (e) => { let v = parseInt($(e.target).val()); if(v<1)v=1; extension_settings[extensionName].autoGenFreq = v; saveSettingsDebounced(); });
 
         // SMART WORKFLOW SWITCHER
-        $("#comfyui_workflow_list").on("change", (e) => {
+        $("#kazuma_workflow_list").on("change", (e) => {
             const newWorkflow = $(e.target).val();
             const oldWorkflow = extension_settings[extensionName].currentWorkflowName;
 
@@ -828,46 +793,46 @@ jQuery(async () => {
             extension_settings[extensionName].currentWorkflowName = newWorkflow;
             saveSettingsDebounced();
         });
-        $("#comfyui_import_btn").on("click", () => $("#comfyui_import_file").click());
+        $("#kazuma_import_btn").on("click", () => $("#kazuma_import_file").click());
 
         // New Logic Events
-        $("#comfyui_prompt_style").on("change", (e) => { extension_settings[extensionName].promptStyle = $(e.target).val(); saveSettingsDebounced(); });
-        $("#comfyui_prompt_persp").on("change", (e) => { extension_settings[extensionName].promptPerspective = $(e.target).val(); saveSettingsDebounced(); });
-        $("#comfyui_prompt_extra").on("input", (e) => { extension_settings[extensionName].promptExtra = $(e.target).val(); saveSettingsDebounced(); });
-        $("#comfyui_profile_strategy").on("change", (e) => {
+        $("#kazuma_prompt_style").on("change", (e) => { extension_settings[extensionName].promptStyle = $(e.target).val(); saveSettingsDebounced(); });
+        $("#kazuma_prompt_persp").on("change", (e) => { extension_settings[extensionName].promptPerspective = $(e.target).val(); saveSettingsDebounced(); });
+        $("#kazuma_prompt_extra").on("input", (e) => { extension_settings[extensionName].promptExtra = $(e.target).val(); saveSettingsDebounced(); });
+        $("#kazuma_profile_strategy").on("change", (e) => {
             extension_settings[extensionName].profileStrategy = $(e.target).val();
             toggleProfileVisibility();
             saveSettingsDebounced();
         });
 
-        $("#comfyui_new_workflow").on("click", onComfyNewWorkflowClick);
-        $("#comfyui_edit_workflow").on("click", onComfyOpenWorkflowEditorClick);
-        $("#comfyui_delete_workflow").on("click", onComfyDeleteWorkflowClick);
+        $("#kazuma_new_workflow").on("click", onComfyNewWorkflowClick);
+        $("#kazuma_edit_workflow").on("click", onComfyOpenWorkflowEditorClick);
+        $("#kazuma_delete_workflow").on("click", onComfyDeleteWorkflowClick);
 
-        $("#comfyui_model_list").on("change", (e) => { extension_settings[extensionName].selectedModel = $(e.target).val(); saveSettingsDebounced(); });
-        $("#comfyui_sampler_list").on("change", (e) => { extension_settings[extensionName].selectedSampler = $(e.target).val(); saveSettingsDebounced(); });
-        $("#comfyui_resolution_list").on("change", (e) => {
+        $("#kazuma_model_list").on("change", (e) => { extension_settings[extensionName].selectedModel = $(e.target).val(); saveSettingsDebounced(); });
+        $("#kazuma_sampler_list").on("change", (e) => { extension_settings[extensionName].selectedSampler = $(e.target).val(); saveSettingsDebounced(); });
+        $("#kazuma_resolution_list").on("change", (e) => {
             const idx = parseInt($(e.target).val());
             if (!isNaN(idx) && RESOLUTIONS[idx]) {
                 const r = RESOLUTIONS[idx];
-                $("#comfyui_width").val(r.w).trigger("input");
-                $("#comfyui_height").val(r.h).trigger("input");
+                $("#kazuma_width").val(r.w).trigger("input");
+                $("#kazuma_height").val(r.h).trigger("input");
             }
         });
 
-        $("#comfyui_lora_list").on("change", (e) => { extension_settings[extensionName].selectedLora = $(e.target).val(); saveSettingsDebounced(); });
-        $("#comfyui_lora_list_2").on("change", (e) => { extension_settings[extensionName].selectedLora2 = $(e.target).val(); saveSettingsDebounced(); });
-        $("#comfyui_lora_list_3").on("change", (e) => { extension_settings[extensionName].selectedLora3 = $(e.target).val(); saveSettingsDebounced(); });
-        $("#comfyui_lora_list_4").on("change", (e) => { extension_settings[extensionName].selectedLora4 = $(e.target).val(); saveSettingsDebounced(); });
-        $("#comfyui_lora_wt").on("input", (e) => { let v = parseFloat($(e.target).val()); extension_settings[extensionName].selectedLoraWt = v; $("#comfyui_lora_wt_display").text(v); saveSettingsDebounced(); });
-        $("#comfyui_lora_wt_2").on("input", (e) => { let v = parseFloat($(e.target).val()); extension_settings[extensionName].selectedLoraWt2 = v; $("#comfyui_lora_wt_display_2").text(v); saveSettingsDebounced(); });
-        $("#comfyui_lora_wt_3").on("input", (e) => { let v = parseFloat($(e.target).val()); extension_settings[extensionName].selectedLoraWt3 = v; $("#comfyui_lora_wt_display_3").text(v); saveSettingsDebounced(); });
-        $("#comfyui_lora_wt_4").on("input", (e) => { let v = parseFloat($(e.target).val()); extension_settings[extensionName].selectedLoraWt4 = v; $("#comfyui_lora_wt_display_4").text(v); saveSettingsDebounced(); });
+        $("#kazuma_lora_list").on("change", (e) => { extension_settings[extensionName].selectedLora = $(e.target).val(); saveSettingsDebounced(); });
+        $("#kazuma_lora_list_2").on("change", (e) => { extension_settings[extensionName].selectedLora2 = $(e.target).val(); saveSettingsDebounced(); });
+        $("#kazuma_lora_list_3").on("change", (e) => { extension_settings[extensionName].selectedLora3 = $(e.target).val(); saveSettingsDebounced(); });
+        $("#kazuma_lora_list_4").on("change", (e) => { extension_settings[extensionName].selectedLora4 = $(e.target).val(); saveSettingsDebounced(); });
+        $("#kazuma_lora_wt").on("input", (e) => { let v = parseFloat($(e.target).val()); extension_settings[extensionName].selectedLoraWt = v; $("#kazuma_lora_wt_display").text(v); saveSettingsDebounced(); });
+        $("#kazuma_lora_wt_2").on("input", (e) => { let v = parseFloat($(e.target).val()); extension_settings[extensionName].selectedLoraWt2 = v; $("#kazuma_lora_wt_display_2").text(v); saveSettingsDebounced(); });
+        $("#kazuma_lora_wt_3").on("input", (e) => { let v = parseFloat($(e.target).val()); extension_settings[extensionName].selectedLoraWt3 = v; $("#kazuma_lora_wt_display_3").text(v); saveSettingsDebounced(); });
+        $("#kazuma_lora_wt_4").on("input", (e) => { let v = parseFloat($(e.target).val()); extension_settings[extensionName].selectedLoraWt4 = v; $("#kazuma_lora_wt_display_4").text(v); saveSettingsDebounced(); });
 
-        $("#comfyui_width, #comfyui_height").on("input", (e) => { extension_settings[extensionName][e.target.id === "comfyui_width" ? "imgWidth" : "imgHeight"] = parseInt($(e.target).val()); saveSettingsDebounced(); });
-        $("#comfyui_negative").on("input", (e) => { extension_settings[extensionName].customNegative = $(e.target).val(); saveSettingsDebounced(); });
-        $("#comfyui_seed").on("input", (e) => { extension_settings[extensionName].customSeed = parseInt($(e.target).val()); saveSettingsDebounced(); });
-        $("#comfyui_compress").on("change", (e) => { extension_settings[extensionName].compressImages = $(e.target).prop("checked"); saveSettingsDebounced(); });
+        $("#kazuma_width, #kazuma_height").on("input", (e) => { extension_settings[extensionName][e.target.id === "kazuma_width" ? "imgWidth" : "imgHeight"] = parseInt($(e.target).val()); saveSettingsDebounced(); });
+        $("#kazuma_negative").on("input", (e) => { extension_settings[extensionName].customNegative = $(e.target).val(); saveSettingsDebounced(); });
+        $("#kazuma_seed").on("input", (e) => { extension_settings[extensionName].customSeed = parseInt($(e.target).val()); saveSettingsDebounced(); });
+        $("#kazuma_compress").on("change", (e) => { extension_settings[extensionName].compressImages = $(e.target).prop("checked"); saveSettingsDebounced(); });
 
         function bindSlider(id, key, isFloat = false) {
             $(`#${id}`).on("input", function() {
@@ -883,23 +848,20 @@ jQuery(async () => {
                 saveSettingsDebounced();
             });
         }
-        bindSlider("comfyui_steps", "steps", false);
-        bindSlider("comfyui_cfg", "cfg", true);
-        bindSlider("comfyui_denoise", "denoise", true);
-        bindSlider("comfyui_clip", "clipSkip", false);
+        bindSlider("kazuma_steps", "steps", false);
+        bindSlider("kazuma_cfg", "cfg", true);
+        bindSlider("kazuma_denoise", "denoise", true);
+        bindSlider("kazuma_clip", "clipSkip", false);
 
-        $("#comfyui_test_btn").on("click", onTestConnection);
-        $("#comfyui_gen_prompt_btn").on("click", onGeneratePrompt);
+        $("#kazuma_test_btn").on("click", onTestConnection);
+        $("#kazuma_gen_prompt_btn").on("click", onGeneratePrompt);
 
         loadSettings();
         eventSource.on(event_types.MESSAGE_RECEIVED, onMessageReceived);
         eventSource.on(event_types.IMAGE_SWIPED, onImageSwiped);
-        if (event_types.CHAT_COMPLETION_PROMPT_READY) {
-            eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, onChatCompletionPromptReady);
-        }
 
-        let att = 0; const int = setInterval(() => { if ($("#comfyui_quick_gen").length > 0) { clearInterval(int); return; } createChatButton(); att++; if (att > 5) clearInterval(int); }, 1000);
-        $(document).on("click", "#comfyui_quick_gen", function(e) { e.preventDefault(); e.stopPropagation(); onGeneratePrompt(); });
+        let att = 0; const int = setInterval(() => { if ($("#kazuma_quick_gen").length > 0) { clearInterval(int); return; } createChatButton(); att++; if (att > 5) clearInterval(int); }, 1000);
+        $(document).on("click", "#kazuma_quick_gen", function(e) { e.preventDefault(); e.stopPropagation(); onGeneratePrompt(); });
     } catch (e) { console.error(e); }
 });
 
@@ -960,16 +922,16 @@ async function onMessageReceived(id) {
     }
 }
 
-function createChatButton() { if ($("#comfyui_quick_gen").length > 0) return; const b = `<div id="comfyui_quick_gen" class="interactable" title="Visualize" style="cursor: pointer; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; margin-right: 5px; opacity: 0.7;"><i class="fa-solid fa-paintbrush fa-lg"></i></div>`; let t = $("#send_but_sheld"); if (!t.length) t = $("#send_textarea"); if (t.length) { t.attr("id") === "send_textarea" ? t.before(b) : t.prepend(b); } }
-function populateProfiles() { const s=$("#comfyui_profile"),o=$("#settings_preset_openai").find("option");s.empty().append('<option value="">-- Use Current Settings --</option>');if(o.length)o.each(function(){s.append(`<option value="${$(this).val()}">${$(this).text()}</option>`)});if(extension_settings[extensionName].connectionProfile)s.val(extension_settings[extensionName].connectionProfile);}
+function createChatButton() { if ($("#kazuma_quick_gen").length > 0) return; const b = `<div id="kazuma_quick_gen" class="interactable" title="Visualize" style="cursor: pointer; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; margin-right: 5px; opacity: 0.7;"><i class="fa-solid fa-paintbrush fa-lg"></i></div>`; let t = $("#send_but_sheld"); if (!t.length) t = $("#send_textarea"); if (t.length) { t.attr("id") === "send_textarea" ? t.before(b) : t.prepend(b); } }
+function populateProfiles() { const s=$("#kazuma_profile"),o=$("#settings_preset_openai").find("option");s.empty().append('<option value="">-- Use Current Settings --</option>');if(o.length)o.each(function(){s.append(`<option value="${$(this).val()}">${$(this).text()}</option>`)});if(extension_settings[extensionName].connectionProfile)s.val(extension_settings[extensionName].connectionProfile);}
 async function onFileSelected(e) { const f=e.target.files[0];if(!f)return;const t=await f.text();try{const j=JSON.parse(t),n=prompt("Name:",f.name.replace(".json",""));if(n){extension_settings[extensionName].savedWorkflows[n]=j;extension_settings[extensionName].currentWorkflowName=n;saveSettingsDebounced();populateWorkflows();}}catch{toastr.error("Invalid JSON");}$(e.target).val('');}
-function showComfyUIProgress(text = "Processing...") {
-    $("#comfyui_progress_text").text(text);
-    $("#comfyui_progress_overlay").css("display", "flex");
+function showKazumaProgress(text = "Processing...") {
+    $("#kazuma_progress_text").text(text);
+    $("#kazuma_progress_overlay").css("display", "flex");
 }
 
-function hideComfyUIProgress() {
-    $("#comfyui_progress_overlay").hide();
+function hideKazumaProgress() {
+    $("#kazuma_progress_overlay").hide();
 }
 /* --- WORKFLOW CONTEXT MANAGERS --- */
 function getWorkflowState() {
@@ -1004,45 +966,33 @@ function applyWorkflowState(state) {
     Object.assign(s, state);
 
     // 2. Update UI Elements
-    $("#comfyui_model_list").val(s.selectedModel);
-    $("#comfyui_sampler_list").val(s.selectedSampler);
+    $("#kazuma_model_list").val(s.selectedModel);
+    $("#kazuma_sampler_list").val(s.selectedSampler);
 
-    updateSliderInput('comfyui_steps', 'comfyui_steps_val', s.steps);
-    updateSliderInput('comfyui_cfg', 'comfyui_cfg_val', s.cfg);
-    updateSliderInput('comfyui_denoise', 'comfyui_denoise_val', s.denoise);
-    updateSliderInput('comfyui_clip', 'comfyui_clip_val', s.clipSkip);
+    updateSliderInput('kazuma_steps', 'kazuma_steps_val', s.steps);
+    updateSliderInput('kazuma_cfg', 'kazuma_cfg_val', s.cfg);
+    updateSliderInput('kazuma_denoise', 'kazuma_denoise_val', s.denoise);
+    updateSliderInput('kazuma_clip', 'kazuma_clip_val', s.clipSkip);
 
-    $("#comfyui_width").val(s.imgWidth);
-    $("#comfyui_height").val(s.imgHeight);
-    $("#comfyui_seed").val(s.customSeed);
-    $("#comfyui_negative").val(s.customNegative);
+    $("#kazuma_width").val(s.imgWidth);
+    $("#kazuma_height").val(s.imgHeight);
+    $("#kazuma_seed").val(s.customSeed);
+    $("#kazuma_negative").val(s.customNegative);
 
     // Smart Prompt UI
-    $("#comfyui_prompt_style").val(s.promptStyle || "standard");
-    $("#comfyui_prompt_persp").val(s.promptPerspective || "scene");
-    $("#comfyui_prompt_extra").val(s.promptExtra || "");
+    $("#kazuma_prompt_style").val(s.promptStyle || "standard");
+    $("#kazuma_prompt_persp").val(s.promptPerspective || "scene");
+    $("#kazuma_prompt_extra").val(s.promptExtra || "");
 
     // LoRA UI
-    $("#comfyui_lora_list").val(s.selectedLora);
-    $("#comfyui_lora_list_2").val(s.selectedLora2);
-    $("#comfyui_lora_list_3").val(s.selectedLora3);
-    $("#comfyui_lora_list_4").val(s.selectedLora4);
+    $("#kazuma_lora_list").val(s.selectedLora);
+    $("#kazuma_lora_list_2").val(s.selectedLora2);
+    $("#kazuma_lora_list_3").val(s.selectedLora3);
+    $("#kazuma_lora_list_4").val(s.selectedLora4);
 
     // LoRA Weights UI
-    $("#comfyui_lora_wt").val(s.selectedLoraWt); $("#comfyui_lora_wt_display").text(s.selectedLoraWt);
-    $("#comfyui_lora_wt_2").val(s.selectedLoraWt2); $("#comfyui_lora_wt_display_2").text(s.selectedLoraWt2);
-    $("#comfyui_lora_wt_3").val(s.selectedLoraWt3); $("#comfyui_lora_wt_display_3").text(s.selectedLoraWt3);
-    $("#comfyui_lora_wt_4").val(s.selectedLoraWt4); $("#comfyui_lora_wt_display_4").text(s.selectedLoraWt4);
-}
-
-/* --- PROMPT INJECTION --- */
-function onChatCompletionPromptReady(data) {
-    if (!extension_settings[extensionName].enabled) return;
-    if (!extension_settings[extensionName].injectProtocol) return;
-
-    if (data && typeof data.system_prompt === "string") {
-        console.log(`[${extensionName}] Injecting Visual Director Protocol to System Prompt...`);
-        // Append with a newline to separate from existing prompt
-        data.system_prompt += "\n" + VISUAL_DIRECTOR_PROTOCOL;
-    }
+    $("#kazuma_lora_wt").val(s.selectedLoraWt); $("#kazuma_lora_wt_display").text(s.selectedLoraWt);
+    $("#kazuma_lora_wt_2").val(s.selectedLoraWt2); $("#kazuma_lora_wt_display_2").text(s.selectedLoraWt2);
+    $("#kazuma_lora_wt_3").val(s.selectedLoraWt3); $("#kazuma_lora_wt_display_3").text(s.selectedLoraWt3);
+    $("#kazuma_lora_wt_4").val(s.selectedLoraWt4); $("#kazuma_lora_wt_display_4").text(s.selectedLoraWt4);
 }
