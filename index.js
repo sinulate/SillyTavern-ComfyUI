@@ -897,6 +897,9 @@ jQuery(async () => {
         if (event_types.CHAT_COMPLETION_PROMPT_READY) {
             eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, onChatCompletionPromptReady);
         }
+        if (event_types.TEXT_COMPLETION_PROMPT_READY) {
+            eventSource.on(event_types.TEXT_COMPLETION_PROMPT_READY, onTextCompletionPromptReady);
+        }
 
         let att = 0; const int = setInterval(() => { if ($("#comfyui_quick_gen").length > 0) { clearInterval(int); return; } createChatButton(); att++; if (att > 5) clearInterval(int); }, 1000);
         $(document).on("click", "#comfyui_quick_gen", function(e) { e.preventDefault(); e.stopPropagation(); onGeneratePrompt(); });
@@ -1044,5 +1047,21 @@ function onChatCompletionPromptReady(data) {
         console.log(`[${extensionName}] Injecting Visual Director Protocol to System Prompt...`);
         // Append with a newline to separate from existing prompt
         data.system_prompt += "\n" + VISUAL_DIRECTOR_PROTOCOL;
+    }
+}
+
+function onTextCompletionPromptReady(data) {
+    if (!extension_settings[extensionName].enabled) return;
+    if (!extension_settings[extensionName].injectProtocol) return;
+
+    if (data && typeof data.prompt === "string") {
+        console.log(`[${extensionName}] Injecting Visual Director Protocol to Text Prompt...`);
+        // Prepend or Append? For system instructions in text completion, usually defined in Story String.
+        // But simply appending to the very end might act as a User message or System note depending on formatting.
+        // Safest is to append with a clear separator or try to inject before the last line.
+        // However, appending to data.prompt affects the final string sent to backend.
+        
+        // We'll append it with a newline.
+        data.prompt += "\n" + VISUAL_DIRECTOR_PROTOCOL;
     }
 }
