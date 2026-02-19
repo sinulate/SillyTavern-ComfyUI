@@ -77,21 +77,21 @@ const RESOLUTIONS = [
 ];
 
 const defaultWorkflowData = {
-  "3": { "inputs": { "seed": "seed", "steps": 20, "cfg": 7, "sampler_name": "sampler", "scheduler": "normal", "denoise": 1, "model": ["35", 0], "positive": ["6", 0], "negative": ["7", 0], "latent_image": ["5", 0] }, "class_type": "KSampler" },
-  "4": { "inputs": { "ckpt_name": "model" }, "class_type": "CheckpointLoaderSimple" },
-  "5": { "inputs": { "width": "width", "height": "height", "batch_size": 1 }, "class_type": "EmptyLatentImage" },
-  "6": { "inputs": { "text": "input", "clip": ["35", 1] }, "class_type": "CLIPTextEncode" },
-  "7": { "inputs": { "text": "ninput", "clip": ["35", 1] }, "class_type": "CLIPTextEncode" },
+  "3": { "inputs": { "seed": "*seed*", "steps": 20, "cfg": 7, "sampler_name": "*sampler*", "scheduler": "normal", "denoise": 1, "model": ["35", 0], "positive": ["6", 0], "negative": ["7", 0], "latent_image": ["5", 0] }, "class_type": "KSampler" },
+  "4": { "inputs": { "ckpt_name": "*model*" }, "class_type": "CheckpointLoaderSimple" },
+  "5": { "inputs": { "width": "*width*", "height": "*height*", "batch_size": 1 }, "class_type": "EmptyLatentImage" },
+  "6": { "inputs": { "text": "*input*", "clip": ["35", 1] }, "class_type": "CLIPTextEncode" },
+  "7": { "inputs": { "text": "*ninput*", "clip": ["35", 1] }, "class_type": "CLIPTextEncode" },
   "8": { "inputs": { "samples": ["33", 0], "vae": ["4", 2] }, "class_type": "VAEDecode" },
   "14": { "inputs": { "images": ["8", 0] }, "class_type": "PreviewImage" },
-  "33": { "inputs": { "seed": "seed", "steps": 20, "cfg": 7, "sampler_name": "sampler", "scheduler": "normal", "denoise": 0.5, "model": ["4", 0], "positive": ["6", 0], "negative": ["7", 0], "latent_image": ["34", 0] }, "class_type": "KSampler" },
+  "33": { "inputs": { "seed": "*seed*", "steps": 20, "cfg": 7, "sampler_name": "*sampler*", "scheduler": "normal", "denoise": 0.5, "model": ["4", 0], "positive": ["6", 0], "negative": ["7", 0], "latent_image": ["34", 0] }, "class_type": "KSampler" },
   "34": { "inputs": { "upscale_method": "nearest-exact", "scale_by": 1.2, "samples": ["3", 0] }, "class_type": "LatentUpscaleBy" },
-  "35": { "inputs": { "lora_name": "lora", "strength_model": "lorawt", "strength_clip": "lorawt", "model": ["4", 0], "clip": ["4", 1] }, "class_type": "LoraLoader" }
+  "35": { "inputs": { "lora_name": "*lora*", "strength_model": "*lorawt*", "strength_clip": "*lorawt*", "model": ["4", 0], "clip": ["4", 1] }, "class_type": "LoraLoader" }
 };
 
 const defaultSettings = {
     enabled: true,
-    injectProtocol: false,
+    injectProtocol: true,
     debugPrompt: false,
     comfyUrl: "http://127.0.0.1:8188",
     connectionProfile: "",
@@ -118,11 +118,11 @@ const defaultSettings = {
     denoise: 0.5,
     clipSkip: 1,
     profileStrategy: "current",
-    promptStyle: "standard",      
-    promptPerspective: "scene",   
-    promptExtra: "",              
+    promptStyle: "standard",
+    promptPerspective: "scene",
+    promptExtra: "",
     connectionProfile: "",
-    savedWorkflowStates: {}  
+    savedWorkflowStates: {}
 };
 
 async function loadSettings() {
@@ -141,7 +141,7 @@ async function loadSettings() {
     $("#comfyui_height").val(extension_settings[extensionName].imgHeight);
     $("#comfyui_auto_enable").prop("checked", extension_settings[extensionName].autoGenEnabled);
     $("#comfyui_auto_freq").val(extension_settings[extensionName].autoGenFreq);
-	
+
     $("#comfyui_prompt_style").val(extension_settings[extensionName].promptStyle || "standard");
     $("#comfyui_prompt_persp").val(extension_settings[extensionName].promptPerspective || "scene");
     $("#comfyui_prompt_extra").val(extension_settings[extensionName].promptExtra || "");
@@ -158,7 +158,7 @@ async function loadSettings() {
     $("#comfyui_negative").val(extension_settings[extensionName].customNegative);
     $("#comfyui_seed").val(extension_settings[extensionName].customSeed);
     $("#comfyui_compress").prop("checked", extension_settings[extensionName].compressImages);
-	
+
 	$("#comfyui_profile_strategy").val(extension_settings[extensionName].profileStrategy || "current");
     toggleProfileVisibility();
 
@@ -204,6 +204,8 @@ function populateResolutions() {
 async function populateWorkflows() {
     const sel = $("#comfyui_workflow_list");
     sel.empty();
+    sel.append('<option value="">-- Default Workflow --</option>'); // Always add Default option
+
     try {
         const response = await fetch('/api/sd/comfy/workflows', {
             method: 'POST',
@@ -220,19 +222,11 @@ async function populateWorkflows() {
             if (extension_settings[extensionName].currentWorkflowName) {
                 if (workflows.includes(extension_settings[extensionName].currentWorkflowName)) {
                     sel.val(extension_settings[extensionName].currentWorkflowName);
-                } else if (workflows.length > 0) {
-                    sel.val(workflows[0]);
-                    extension_settings[extensionName].currentWorkflowName = workflows[0];
-                    saveSettingsDebounced();
                 }
-            } else if (workflows.length > 0) {
-                sel.val(workflows[0]);
-                extension_settings[extensionName].currentWorkflowName = workflows[0];
-                saveSettingsDebounced();
             }
         }
     } catch (e) {
-        sel.append('<option disabled>Failed to load</option>');
+        console.warn(`[${extensionName}] Failed to list workflows from server.`, e);
     }
 }
 
@@ -573,15 +567,25 @@ async function generateWithComfy(positivePrompt, target = null) {
     const url = extension_settings[extensionName].comfyUrl;
     const currentName = extension_settings[extensionName].currentWorkflowName;
 
-    // Load from server
+    // Load from server or fallback
     let workflowRaw;
     try {
+        if (!currentName) throw new Error("No workflow selected");
         const res = await fetch('/api/sd/comfy/workflow', { method: 'POST', headers: getRequestHeaders(), body: JSON.stringify({ file_name: currentName }) });
         if (!res.ok) throw new Error("Load failed");
         workflowRaw = await res.json();
-    } catch (e) { return toastr.error(`Could not load ${currentName}`); }
+    } catch (e) {
+        console.warn(`[${extensionName}] Failed to load workflow from server. Using default.`, e);
+        workflowRaw = JSON.parse(JSON.stringify(defaultWorkflowData));
+    }
 
     let workflow = (typeof workflowRaw === 'string') ? JSON.parse(workflowRaw) : workflowRaw;
+
+    // Safety check for workflow
+    if (!workflow || typeof workflow !== 'object') {
+        toastr.error("Invalid workflow data.");
+        return;
+    }
 
     let finalSeed = parseInt(extension_settings[extensionName].customSeed);
     if (finalSeed === -1 || isNaN(finalSeed)) {
@@ -603,9 +607,11 @@ function injectParamsIntoWorkflow(workflow, promptText, finalSeed) {
     const s = extension_settings[extensionName];
     let seedInjected = false;
 
+    if (!workflow) return {};
+
     for (const nodeId in workflow) {
         const node = workflow[nodeId];
-        if (node.inputs) {
+        if (node && node.inputs) {
             for (const key in node.inputs) {
                 const val = node.inputs[key];
 
@@ -903,64 +909,100 @@ jQuery(async () => {
 
         let att = 0; const int = setInterval(() => { if ($("#comfyui_quick_gen").length > 0) { clearInterval(int); return; } createChatButton(); att++; if (att > 5) clearInterval(int); }, 1000);
         $(document).on("click", "#comfyui_quick_gen", function(e) { e.preventDefault(); e.stopPropagation(); onGeneratePrompt(); });
+
+        // Manual Scan Button Handler
+        $("#comfyui_manual_scan_btn").on("click", onScanLastMessage);
+        $("#comfyui_clear_log").on("click", () => $("#comfyui_debug_log").val(""));
+
     } catch (e) { console.error(e); }
 });
 
 // Helpers (Condensed)
+function logToUI(msg) {
+    const ts = new Date().toLocaleTimeString();
+    const entry = `[${ts}] ${msg}\n`;
+    const $log = $("#comfyui_debug_log");
+    $log.val($log.val() + entry);
+    $log.scrollTop($log[0].scrollHeight);
+    console.log(`[${extensionName}] ${msg}`);
+}
+
+/* --- MANUAL SCAN FOR DEBUG --- */
+async function onScanLastMessage() {
+    logToUI("Manual Scan Triggered.");
+    const context = getContext();
+    const chat = context.chat;
+    if (!chat || !chat.length) return logToUI("Error: No chat history found.");
+
+    // Pass the index of the last message
+    await onMessageReceived(chat.length - 1);
+}
+
 /* --- NEW INJECTION LISTENER --- */
 async function onMessageReceived(id) {
     // 1. Basic Safety Checks
     if (!extension_settings[extensionName].enabled) return;
-    
-    const context = getContext();
-    const chat = context.chat;
-    if (!chat || !chat.length) return;
 
-    // Get the most recent message
-    const lastMsgIndex = chat.length - 1;
-    let lastMsg = chat[lastMsgIndex];
+    // WAIT for streaming to finish / UI to settle
+    setTimeout(async () => {
+        const context = getContext();
+        const chat = context.chat;
+        if (!chat || !chat.length) return;
 
-    // Ignore User messages (we only want to generate from AI output)
-    if (lastMsg.is_user) return;
-
-    // 2. THE DETECTION LOGIC (Regex)
-    // Looks for anything between <comfyui> tags. 
-    // The [\s\S]*? ensures it captures multi-line text (English + Chinese).
-    const regex = /<comfyui>([\s\S]*?)<\/comfyui>/i;
-    const match = lastMsg.mes.match(regex);
-
-    if (match) {
-        console.log(`[${extensionName}] Injection Tag Detected!`);
-        
-        // 3. EXTRACTION
-        const extractedPrompt = match[1].trim();
-        
-        // 4. THE "ACTIVE HIDE"
-        // We modify the message content to remove the tag so it doesn't clutter the chat.
-        const cleanMessage = lastMsg.mes.replace(match[0], "").trim();
-        
-        // Update the message in memory
-        chat[lastMsgIndex].mes = cleanMessage;
-        
-        // Save to SillyTavern storage
-        await saveChat();
-        
-        // Force a UI refresh so the tag disappears from your screen immediately
-        if (typeof reloadCurrentChat === "function") {
-            await reloadCurrentChat();
+        // Get the message (robustly)
+        let msgIndex = -1;
+        if (typeof id !== 'undefined' && chat[id]) {
+            msgIndex = id;
+        } else {
+            msgIndex = chat.length - 1;
         }
 
-        // 5. EXECUTION
-        // Send the extracted text directly to the ComfyUI handler.
-        // We pass 'null' as the target so it adds a new message/image to the chat.
-        console.log(`[${extensionName}] Sending extracted prompt to ComfyUI...`);
-        await generateWithComfy(extractedPrompt, null);
-    } 
-    else {
-        // Optional: If no tag is found, do nothing.
-        // The old "Auto-Gen Frequency" logic is now bypassed.
-        console.log(`[${extensionName}] No <comfyui> tag found. Skipping generation.`);
-    }
+        let message = chat[msgIndex];
+
+        // Ignore User messages (we only want to generate from AI output)
+        if (message.is_user) return;
+
+        logToUI(`Analyzing msg #${msgIndex} (${message.mes.length} chars)...`);
+
+        // 2. THE DETECTION LOGIC (Regex)
+        // Relaxed regex: case insensitive, handles potential spaces
+        const regex = /<comfyui\s*>([\s\S]*?)<\/comfyui>/i;
+        const match = message.mes.match(regex);
+
+        if (match) {
+            logToUI("✅ TAG DETECTED!");
+            toastr.info("Visual Director instruction found. Generating...", "ComfyUI");
+
+            // 3. EXTRACTION
+            const extractedPrompt = match[1].trim();
+
+            if (!extractedPrompt) {
+                logToUI("❌ Warning: Empty prompt inside tags.");
+                return;
+            }
+
+            // 4. THE "ACTIVE HIDE"
+            const cleanMessage = message.mes.replace(match[0], "").trim();
+
+            // Update the message in memory
+            chat[msgIndex].mes = cleanMessage;
+
+            // Save to SillyTavern storage
+            await saveChat();
+
+            // Force a UI refresh so the tag disappears from your screen immediately
+            if (typeof reloadCurrentChat === "function") {
+                await reloadCurrentChat();
+            }
+
+            // 5. EXECUTION
+            logToUI(`Sending prompt: "${extractedPrompt.substring(0, 30)}..."`);
+            await generateWithComfy(extractedPrompt, null);
+        }
+        else {
+            logToUI(`❌ No <comfyui> tag. Content preview: "${message.mes.substring(message.mes.length - 50)}"`);
+        }
+    }, 500); // 500ms delay
 }
 
 function createChatButton() { if ($("#comfyui_quick_gen").length > 0) return; const b = `<div id="comfyui_quick_gen" class="interactable" title="Visualize" style="cursor: pointer; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; margin-right: 5px; opacity: 0.7;"><i class="fa-solid fa-paintbrush fa-lg"></i></div>`; let t = $("#send_but_sheld"); if (!t.length) t = $("#send_textarea"); if (t.length) { t.attr("id") === "send_textarea" ? t.before(b) : t.prepend(b); } }
@@ -1041,10 +1083,16 @@ function applyWorkflowState(state) {
 /* --- PROMPT INJECTION --- */
 function onChatCompletionPromptReady(data) {
     if (!extension_settings[extensionName].enabled) return;
-    if (!extension_settings[extensionName].injectProtocol) return;
+    if (!extension_settings[extensionName].injectProtocol) {
+        // Warn if user expects images but injection is off
+        if (extension_settings[extensionName].autoGenEnabled) {
+            toastr.warning("Auto-Gen enabled but Injection is OFF. The model won't know how to generate images.", "ComfyUI");
+        }
+        return;
+    }
 
     if (data && typeof data.system_prompt === "string") {
-        console.log(`[${extensionName}] Injecting Visual Director Protocol to System Prompt...`);
+        console.log(`[${extensionName}] 💉 Injecting Visual Director Protocol to System Prompt...`);
         // Append with a newline to separate from existing prompt
         data.system_prompt += "\n" + VISUAL_DIRECTOR_PROTOCOL;
     }
@@ -1060,7 +1108,7 @@ function onTextCompletionPromptReady(data) {
         // But simply appending to the very end might act as a User message or System note depending on formatting.
         // Safest is to append with a clear separator or try to inject before the last line.
         // However, appending to data.prompt affects the final string sent to backend.
-        
+
         // We'll append it with a newline.
         data.prompt += "\n" + VISUAL_DIRECTOR_PROTOCOL;
     }
