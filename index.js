@@ -1,9 +1,9 @@
 /* eslint-disable no-undef */
-import { extension_settings, getContext } from "../../extensions.js";
-import { saveSettingsDebounced, generateQuietPrompt, saveChat, reloadCurrentChat, eventSource, event_types, addOneMessage, getRequestHeaders, appendMediaToMessage } from "../../../script.js";
-import { saveBase64AsFile } from "../../utils.js";
-import { humanizedDateTime } from "../../RossAscends-mods.js";
-import { Popup, POPUP_TYPE } from "../../popup.js";
+import { extension_settings, getContext } from "../../../extensions.js";
+import { saveSettingsDebounced, generateQuietPrompt, saveChat, reloadCurrentChat, eventSource, event_types, addOneMessage, getRequestHeaders, appendMediaToMessage } from "../../../../script.js";
+import { saveBase64AsFile } from "../../../utils.js";
+import { humanizedDateTime } from "../../../RossAscends-mods.js";
+import { Popup, POPUP_TYPE } from "../../../popup.js";
 
 const extensionName = "Image-gen-comfyui";
 const extensionFolderPath = import.meta.url.substring(0, import.meta.url.lastIndexOf("/"));
@@ -912,17 +912,27 @@ jQuery(async () => {
 
         // Manual Scan Button Handler
         $("#comfyui_manual_scan_btn").on("click", onScanLastMessage);
+        $("#comfyui_clear_log").on("click", () => $("#comfyui_debug_log").val(""));
 
     } catch (e) { console.error(e); }
 });
 
 // Helpers (Condensed)
+function logToUI(msg) {
+    const ts = new Date().toLocaleTimeString();
+    const entry = `[${ts}] ${msg}\n`;
+    const $log = $("#comfyui_debug_log");
+    $log.val($log.val() + entry);
+    $log.scrollTop($log[0].scrollHeight);
+    console.log(`[${extensionName}] ${msg}`);
+}
+
 /* --- MANUAL SCAN FOR DEBUG --- */
 async function onScanLastMessage() {
-    toastr.info("Scanning last message for tags...", "ComfyUI");
+    logToUI("Manual Scan Triggered.");
     const context = getContext();
     const chat = context.chat;
-    if (!chat || !chat.length) return toastr.warning("No chat messages.");
+    if (!chat || !chat.length) return logToUI("Error: No chat history found.");
 
     // Pass the index of the last message
     await onMessageReceived(chat.length - 1);
@@ -952,7 +962,7 @@ async function onMessageReceived(id) {
         // Ignore User messages (we only want to generate from AI output)
         if (message.is_user) return;
 
-        console.log(`[${extensionName}] Analyzing message ${msgIndex} for tags... Content length: ${message.mes.length}`);
+        logToUI(`Analyzing msg #${msgIndex} (${message.mes.length} chars)...`);
 
         // 2. THE DETECTION LOGIC (Regex)
         // Relaxed regex: case insensitive, handles potential spaces
@@ -960,14 +970,14 @@ async function onMessageReceived(id) {
         const match = message.mes.match(regex);
 
         if (match) {
-            console.log(`[${extensionName}] ✅ Injection Tag Detected!`);
+            logToUI("✅ TAG DETECTED!");
             toastr.info("Visual Director instruction found. Generating...", "ComfyUI");
 
             // 3. EXTRACTION
             const extractedPrompt = match[1].trim();
 
             if (!extractedPrompt) {
-                console.warn(`[${extensionName}] Empty prompt inside <comfyui> tags.`);
+                logToUI("❌ Warning: Empty prompt inside tags.");
                 return;
             }
 
@@ -986,11 +996,11 @@ async function onMessageReceived(id) {
             }
 
             // 5. EXECUTION
-            console.log(`[${extensionName}] Sending extracted prompt to ComfyUI: "${extractedPrompt.substring(0, 50)}..."`);
+            logToUI(`Sending prompt: "${extractedPrompt.substring(0, 30)}..."`);
             await generateWithComfy(extractedPrompt, null);
         }
         else {
-            console.log(`[${extensionName}] ❌ No <comfyui> tag found in message.`);
+            logToUI(`❌ No <comfyui> tag. Content preview: "${message.mes.substring(message.mes.length - 50)}"`);
         }
     }, 500); // 500ms delay
 }

@@ -206,6 +206,15 @@
                     <i class="fa-solid fa-magnifying-glass"></i> Scan Chat
                 </button>
             </div>
+
+            <!-- Debug Log -->
+            <div class="comfyui-group" style="margin-top: 10px;">
+                <div class="comfyui-header">
+                    <span><i class="fa-solid fa-terminal"></i> Debug Log</span>
+                    <i id="comfyui_clear_log" class="fa-solid fa-trash interactable" title="Clear Log" style="cursor:pointer;"></i>
+                </div>
+                <textarea id="comfyui_debug_log" class="text_pole" rows="6" style="width:100%; font-family:monospace; font-size:11px; white-space:pre-wrap;" readonly placeholder="Activity log..."></textarea>
+            </div>
         </div>
     </div>
 </div>
