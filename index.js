@@ -909,75 +909,90 @@ jQuery(async () => {
 
         let att = 0; const int = setInterval(() => { if ($("#comfyui_quick_gen").length > 0) { clearInterval(int); return; } createChatButton(); att++; if (att > 5) clearInterval(int); }, 1000);
         $(document).on("click", "#comfyui_quick_gen", function(e) { e.preventDefault(); e.stopPropagation(); onGeneratePrompt(); });
+
+        // Manual Scan Button Handler
+        $("#comfyui_manual_scan_btn").on("click", onScanLastMessage);
+
     } catch (e) { console.error(e); }
 });
 
 // Helpers (Condensed)
+/* --- MANUAL SCAN FOR DEBUG --- */
+async function onScanLastMessage() {
+    toastr.info("Scanning last message for tags...", "ComfyUI");
+    const context = getContext();
+    const chat = context.chat;
+    if (!chat || !chat.length) return toastr.warning("No chat messages.");
+
+    // Pass the index of the last message
+    await onMessageReceived(chat.length - 1);
+}
+
 /* --- NEW INJECTION LISTENER --- */
 async function onMessageReceived(id) {
     // 1. Basic Safety Checks
     if (!extension_settings[extensionName].enabled) return;
 
-    const context = getContext();
-    const chat = context.chat;
-    if (!chat || !chat.length) return;
+    // WAIT for streaming to finish / UI to settle
+    setTimeout(async () => {
+        const context = getContext();
+        const chat = context.chat;
+        if (!chat || !chat.length) return;
 
-    // Get the message (robustly)
-    let msgIndex = -1;
-    if (typeof id !== 'undefined' && chat[id]) {
-        msgIndex = id;
-    } else {
-        msgIndex = chat.length - 1;
-    }
-
-    let message = chat[msgIndex];
-
-    // Ignore User messages (we only want to generate from AI output)
-    if (message.is_user) return;
-
-    console.debug(`[${extensionName}] Checking message ${msgIndex} for <comfyui> tags...`);
-
-    // 2. THE DETECTION LOGIC (Regex)
-    // Looks for anything between <comfyui> tags.
-    // The [\s\S]*? ensures it captures multi-line text (English + Chinese).
-    const regex = /<comfyui>([\s\S]*?)<\/comfyui>/i;
-    const match = message.mes.match(regex);
-
-    if (match) {
-        console.log(`[${extensionName}] Injection Tag Detected!`);
-
-        // 3. EXTRACTION
-        const extractedPrompt = match[1].trim();
-
-        if (!extractedPrompt) {
-            console.warn(`[${extensionName}] Empty prompt inside <comfyui> tags.`);
-            return;
+        // Get the message (robustly)
+        let msgIndex = -1;
+        if (typeof id !== 'undefined' && chat[id]) {
+            msgIndex = id;
+        } else {
+            msgIndex = chat.length - 1;
         }
 
-        // 4. THE "ACTIVE HIDE"
-        // We modify the message content to remove the tag so it doesn't clutter the chat.
-        const cleanMessage = message.mes.replace(match[0], "").trim();
+        let message = chat[msgIndex];
 
-        // Update the message in memory
-        chat[msgIndex].mes = cleanMessage;
+        // Ignore User messages (we only want to generate from AI output)
+        if (message.is_user) return;
 
-        // Save to SillyTavern storage
-        await saveChat();
+        console.log(`[${extensionName}] Analyzing message ${msgIndex} for tags... Content length: ${message.mes.length}`);
 
-        // Force a UI refresh so the tag disappears from your screen immediately
-        if (typeof reloadCurrentChat === "function") {
-            await reloadCurrentChat();
+        // 2. THE DETECTION LOGIC (Regex)
+        // Relaxed regex: case insensitive, handles potential spaces
+        const regex = /<comfyui\s*>([\s\S]*?)<\/comfyui>/i;
+        const match = message.mes.match(regex);
+
+        if (match) {
+            console.log(`[${extensionName}] ✅ Injection Tag Detected!`);
+            toastr.info("Visual Director instruction found. Generating...", "ComfyUI");
+
+            // 3. EXTRACTION
+            const extractedPrompt = match[1].trim();
+
+            if (!extractedPrompt) {
+                console.warn(`[${extensionName}] Empty prompt inside <comfyui> tags.`);
+                return;
+            }
+
+            // 4. THE "ACTIVE HIDE"
+            const cleanMessage = message.mes.replace(match[0], "").trim();
+
+            // Update the message in memory
+            chat[msgIndex].mes = cleanMessage;
+
+            // Save to SillyTavern storage
+            await saveChat();
+
+            // Force a UI refresh so the tag disappears from your screen immediately
+            if (typeof reloadCurrentChat === "function") {
+                await reloadCurrentChat();
+            }
+
+            // 5. EXECUTION
+            console.log(`[${extensionName}] Sending extracted prompt to ComfyUI: "${extractedPrompt.substring(0, 50)}..."`);
+            await generateWithComfy(extractedPrompt, null);
         }
-
-        // 5. EXECUTION
-        // Send the extracted text directly to the ComfyUI handler.
-        // We pass 'null' as the target so it adds a new message/image to the chat.
-        console.log(`[${extensionName}] Sending extracted prompt to ComfyUI: "${extractedPrompt.substring(0, 50)}..."`);
-        await generateWithComfy(extractedPrompt, null);
-    }
-    else {
-        console.debug(`[${extensionName}] No <comfyui> tag found.`);
-    }
+        else {
+            console.log(`[${extensionName}] ❌ No <comfyui> tag found in message.`);
+        }
+    }, 500); // 500ms delay
 }
 
 function createChatButton() { if ($("#comfyui_quick_gen").length > 0) return; const b = `<div id="comfyui_quick_gen" class="interactable" title="Visualize" style="cursor: pointer; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; margin-right: 5px; opacity: 0.7;"><i class="fa-solid fa-paintbrush fa-lg"></i></div>`; let t = $("#send_but_sheld"); if (!t.length) t = $("#send_textarea"); if (t.length) { t.attr("id") === "send_textarea" ? t.before(b) : t.prepend(b); } }
@@ -1058,10 +1073,16 @@ function applyWorkflowState(state) {
 /* --- PROMPT INJECTION --- */
 function onChatCompletionPromptReady(data) {
     if (!extension_settings[extensionName].enabled) return;
-    if (!extension_settings[extensionName].injectProtocol) return;
+    if (!extension_settings[extensionName].injectProtocol) {
+        // Warn if user expects images but injection is off
+        if (extension_settings[extensionName].autoGenEnabled) {
+            toastr.warning("Auto-Gen enabled but Injection is OFF. The model won't know how to generate images.", "ComfyUI");
+        }
+        return;
+    }
 
     if (data && typeof data.system_prompt === "string") {
-        console.log(`[${extensionName}] Injecting Visual Director Protocol to System Prompt...`);
+        console.log(`[${extensionName}] 💉 Injecting Visual Director Protocol to System Prompt...`);
         // Append with a newline to separate from existing prompt
         data.system_prompt += "\n" + VISUAL_DIRECTOR_PROTOCOL;
     }
