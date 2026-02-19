@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
-import { extension_settings, getContext } from "../../../extensions.js";
-import { saveSettingsDebounced, generateQuietPrompt, saveChat, reloadCurrentChat, eventSource, event_types, addOneMessage, getRequestHeaders, appendMediaToMessage } from "../../../../script.js";
+import { extension_settings, getContext } from "../../extensions.js";
+import { saveSettingsDebounced, generateQuietPrompt, saveChat, reloadCurrentChat, eventSource, event_types, addOneMessage, getRequestHeaders, appendMediaToMessage } from "../../../script.js";
 import { saveBase64AsFile } from "../../../utils.js";
 import { humanizedDateTime } from "../../../RossAscends-mods.js";
 import { Popup, POPUP_TYPE } from "../../../popup.js";
@@ -91,7 +91,7 @@ const defaultWorkflowData = {
 
 const defaultSettings = {
     enabled: true,
-    injectProtocol: false,
+    injectProtocol: true,
     debugPrompt: false,
     comfyUrl: "http://127.0.0.1:8188",
     connectionProfile: "",
@@ -118,11 +118,11 @@ const defaultSettings = {
     denoise: 0.5,
     clipSkip: 1,
     profileStrategy: "current",
-    promptStyle: "standard",      
-    promptPerspective: "scene",   
-    promptExtra: "",              
+    promptStyle: "standard",
+    promptPerspective: "scene",
+    promptExtra: "",
     connectionProfile: "",
-    savedWorkflowStates: {}  
+    savedWorkflowStates: {}
 };
 
 async function loadSettings() {
@@ -141,7 +141,7 @@ async function loadSettings() {
     $("#comfyui_height").val(extension_settings[extensionName].imgHeight);
     $("#comfyui_auto_enable").prop("checked", extension_settings[extensionName].autoGenEnabled);
     $("#comfyui_auto_freq").val(extension_settings[extensionName].autoGenFreq);
-	
+
     $("#comfyui_prompt_style").val(extension_settings[extensionName].promptStyle || "standard");
     $("#comfyui_prompt_persp").val(extension_settings[extensionName].promptPerspective || "scene");
     $("#comfyui_prompt_extra").val(extension_settings[extensionName].promptExtra || "");
@@ -158,7 +158,7 @@ async function loadSettings() {
     $("#comfyui_negative").val(extension_settings[extensionName].customNegative);
     $("#comfyui_seed").val(extension_settings[extensionName].customSeed);
     $("#comfyui_compress").prop("checked", extension_settings[extensionName].compressImages);
-	
+
 	$("#comfyui_profile_strategy").val(extension_settings[extensionName].profileStrategy || "current");
     toggleProfileVisibility();
 
@@ -583,6 +583,12 @@ async function generateWithComfy(positivePrompt, target = null) {
 
     let workflow = (typeof workflowRaw === 'string') ? JSON.parse(workflowRaw) : workflowRaw;
 
+    // Safety check for workflow
+    if (!workflow || typeof workflow !== 'object') {
+        toastr.error("Invalid workflow data loaded.");
+        return;
+    }
+
     let finalSeed = parseInt(extension_settings[extensionName].customSeed);
     if (finalSeed === -1 || isNaN(finalSeed)) {
         finalSeed = Math.floor(Math.random() * 1000000000);
@@ -603,9 +609,11 @@ function injectParamsIntoWorkflow(workflow, promptText, finalSeed) {
     const s = extension_settings[extensionName];
     let seedInjected = false;
 
+    if (!workflow) return {};
+
     for (const nodeId in workflow) {
         const node = workflow[nodeId];
-        if (node.inputs) {
+        if (node && node.inputs) {
             for (const key in node.inputs) {
                 const val = node.inputs[key];
 
@@ -911,40 +919,53 @@ jQuery(async () => {
 async function onMessageReceived(id) {
     // 1. Basic Safety Checks
     if (!extension_settings[extensionName].enabled) return;
-    
+
     const context = getContext();
     const chat = context.chat;
     if (!chat || !chat.length) return;
 
-    // Get the most recent message
-    const lastMsgIndex = chat.length - 1;
-    let lastMsg = chat[lastMsgIndex];
+    // Get the message (robustly)
+    let msgIndex = -1;
+    if (typeof id !== 'undefined' && chat[id]) {
+        msgIndex = id;
+    } else {
+        msgIndex = chat.length - 1;
+    }
+
+    let message = chat[msgIndex];
 
     // Ignore User messages (we only want to generate from AI output)
-    if (lastMsg.is_user) return;
+    if (message.is_user) return;
+
+    console.debug(`[${extensionName}] Checking message ${msgIndex} for <comfyui> tags...`);
 
     // 2. THE DETECTION LOGIC (Regex)
-    // Looks for anything between <comfyui> tags. 
+    // Looks for anything between <comfyui> tags.
     // The [\s\S]*? ensures it captures multi-line text (English + Chinese).
     const regex = /<comfyui>([\s\S]*?)<\/comfyui>/i;
-    const match = lastMsg.mes.match(regex);
+    const match = message.mes.match(regex);
 
     if (match) {
         console.log(`[${extensionName}] Injection Tag Detected!`);
-        
+
         // 3. EXTRACTION
         const extractedPrompt = match[1].trim();
-        
+
+        if (!extractedPrompt) {
+            console.warn(`[${extensionName}] Empty prompt inside <comfyui> tags.`);
+            return;
+        }
+
         // 4. THE "ACTIVE HIDE"
         // We modify the message content to remove the tag so it doesn't clutter the chat.
-        const cleanMessage = lastMsg.mes.replace(match[0], "").trim();
-        
+        const cleanMessage = message.mes.replace(match[0], "").trim();
+
         // Update the message in memory
-        chat[lastMsgIndex].mes = cleanMessage;
-        
+        chat[msgIndex].mes = cleanMessage;
+
         // Save to SillyTavern storage
         await saveChat();
-        
+
         // Force a UI refresh so the tag disappears from your screen immediately
         if (typeof reloadCurrentChat === "function") {
             await reloadCurrentChat();
@@ -953,13 +974,11 @@ async function onMessageReceived(id) {
         // 5. EXECUTION
         // Send the extracted text directly to the ComfyUI handler.
         // We pass 'null' as the target so it adds a new message/image to the chat.
-        console.log(`[${extensionName}] Sending extracted prompt to ComfyUI...`);
+        console.log(`[${extensionName}] Sending extracted prompt to ComfyUI: "${extractedPrompt.substring(0, 50)}..."`);
         await generateWithComfy(extractedPrompt, null);
-    } 
+    }
     else {
-        // Optional: If no tag is found, do nothing.
-        // The old "Auto-Gen Frequency" logic is now bypassed.
-        console.log(`[${extensionName}] No <comfyui> tag found. Skipping generation.`);
+        console.debug(`[${extensionName}] No <comfyui> tag found.`);
     }
 }
 
@@ -1060,7 +1079,7 @@ function onTextCompletionPromptReady(data) {
         // But simply appending to the very end might act as a User message or System note depending on formatting.
         // Safest is to append with a clear separator or try to inject before the last line.
         // However, appending to data.prompt affects the final string sent to backend.
-        
+
         // We'll append it with a newline.
         data.prompt += "\n" + VISUAL_DIRECTOR_PROTOCOL;
     }
