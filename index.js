@@ -1,9 +1,9 @@
 /* eslint-disable no-undef */
 import { extension_settings, getContext } from "../../extensions.js";
 import { saveSettingsDebounced, generateQuietPrompt, saveChat, reloadCurrentChat, eventSource, event_types, addOneMessage, getRequestHeaders, appendMediaToMessage } from "../../../script.js";
-import { saveBase64AsFile } from "../../../utils.js";
-import { humanizedDateTime } from "../../../RossAscends-mods.js";
-import { Popup, POPUP_TYPE } from "../../../popup.js";
+import { saveBase64AsFile } from "../../utils.js";
+import { humanizedDateTime } from "../../RossAscends-mods.js";
+import { Popup, POPUP_TYPE } from "../../popup.js";
 
 const extensionName = "Image-gen-comfyui";
 const extensionFolderPath = import.meta.url.substring(0, import.meta.url.lastIndexOf("/"));
@@ -77,16 +77,16 @@ const RESOLUTIONS = [
 ];
 
 const defaultWorkflowData = {
-  "3": { "inputs": { "seed": "seed", "steps": 20, "cfg": 7, "sampler_name": "sampler", "scheduler": "normal", "denoise": 1, "model": ["35", 0], "positive": ["6", 0], "negative": ["7", 0], "latent_image": ["5", 0] }, "class_type": "KSampler" },
-  "4": { "inputs": { "ckpt_name": "model" }, "class_type": "CheckpointLoaderSimple" },
-  "5": { "inputs": { "width": "width", "height": "height", "batch_size": 1 }, "class_type": "EmptyLatentImage" },
-  "6": { "inputs": { "text": "input", "clip": ["35", 1] }, "class_type": "CLIPTextEncode" },
-  "7": { "inputs": { "text": "ninput", "clip": ["35", 1] }, "class_type": "CLIPTextEncode" },
+  "3": { "inputs": { "seed": "*seed*", "steps": 20, "cfg": 7, "sampler_name": "*sampler*", "scheduler": "normal", "denoise": 1, "model": ["35", 0], "positive": ["6", 0], "negative": ["7", 0], "latent_image": ["5", 0] }, "class_type": "KSampler" },
+  "4": { "inputs": { "ckpt_name": "*model*" }, "class_type": "CheckpointLoaderSimple" },
+  "5": { "inputs": { "width": "*width*", "height": "*height*", "batch_size": 1 }, "class_type": "EmptyLatentImage" },
+  "6": { "inputs": { "text": "*input*", "clip": ["35", 1] }, "class_type": "CLIPTextEncode" },
+  "7": { "inputs": { "text": "*ninput*", "clip": ["35", 1] }, "class_type": "CLIPTextEncode" },
   "8": { "inputs": { "samples": ["33", 0], "vae": ["4", 2] }, "class_type": "VAEDecode" },
   "14": { "inputs": { "images": ["8", 0] }, "class_type": "PreviewImage" },
-  "33": { "inputs": { "seed": "seed", "steps": 20, "cfg": 7, "sampler_name": "sampler", "scheduler": "normal", "denoise": 0.5, "model": ["4", 0], "positive": ["6", 0], "negative": ["7", 0], "latent_image": ["34", 0] }, "class_type": "KSampler" },
+  "33": { "inputs": { "seed": "*seed*", "steps": 20, "cfg": 7, "sampler_name": "*sampler*", "scheduler": "normal", "denoise": 0.5, "model": ["4", 0], "positive": ["6", 0], "negative": ["7", 0], "latent_image": ["34", 0] }, "class_type": "KSampler" },
   "34": { "inputs": { "upscale_method": "nearest-exact", "scale_by": 1.2, "samples": ["3", 0] }, "class_type": "LatentUpscaleBy" },
-  "35": { "inputs": { "lora_name": "lora", "strength_model": "lorawt", "strength_clip": "lorawt", "model": ["4", 0], "clip": ["4", 1] }, "class_type": "LoraLoader" }
+  "35": { "inputs": { "lora_name": "*lora*", "strength_model": "*lorawt*", "strength_clip": "*lorawt*", "model": ["4", 0], "clip": ["4", 1] }, "class_type": "LoraLoader" }
 };
 
 const defaultSettings = {
@@ -204,6 +204,8 @@ function populateResolutions() {
 async function populateWorkflows() {
     const sel = $("#comfyui_workflow_list");
     sel.empty();
+    sel.append('<option value="">-- Default Workflow --</option>'); // Always add Default option
+
     try {
         const response = await fetch('/api/sd/comfy/workflows', {
             method: 'POST',
@@ -220,19 +222,11 @@ async function populateWorkflows() {
             if (extension_settings[extensionName].currentWorkflowName) {
                 if (workflows.includes(extension_settings[extensionName].currentWorkflowName)) {
                     sel.val(extension_settings[extensionName].currentWorkflowName);
-                } else if (workflows.length > 0) {
-                    sel.val(workflows[0]);
-                    extension_settings[extensionName].currentWorkflowName = workflows[0];
-                    saveSettingsDebounced();
                 }
-            } else if (workflows.length > 0) {
-                sel.val(workflows[0]);
-                extension_settings[extensionName].currentWorkflowName = workflows[0];
-                saveSettingsDebounced();
             }
         }
     } catch (e) {
-        sel.append('<option disabled>Failed to load</option>');
+        console.warn(`[${extensionName}] Failed to list workflows from server.`, e);
     }
 }
 
@@ -573,19 +567,23 @@ async function generateWithComfy(positivePrompt, target = null) {
     const url = extension_settings[extensionName].comfyUrl;
     const currentName = extension_settings[extensionName].currentWorkflowName;
 
-    // Load from server
+    // Load from server or fallback
     let workflowRaw;
     try {
+        if (!currentName) throw new Error("No workflow selected");
         const res = await fetch('/api/sd/comfy/workflow', { method: 'POST', headers: getRequestHeaders(), body: JSON.stringify({ file_name: currentName }) });
         if (!res.ok) throw new Error("Load failed");
         workflowRaw = await res.json();
-    } catch (e) { return toastr.error(`Could not load ${currentName}`); }
+    } catch (e) {
+        console.warn(`[${extensionName}] Failed to load workflow from server. Using default.`, e);
+        workflowRaw = JSON.parse(JSON.stringify(defaultWorkflowData));
+    }
 
     let workflow = (typeof workflowRaw === 'string') ? JSON.parse(workflowRaw) : workflowRaw;
 
     // Safety check for workflow
     if (!workflow || typeof workflow !== 'object') {
-        toastr.error("Invalid workflow data loaded.");
+        toastr.error("Invalid workflow data.");
         return;
     }
 
