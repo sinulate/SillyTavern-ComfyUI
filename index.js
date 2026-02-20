@@ -91,7 +91,7 @@ const defaultWorkflowData = {
 
 const defaultSettings = {
     enabled: true,
-    injectProtocol: false,
+    injectProtocol: true,
     debugPrompt: false,
     comfyUrl: "http://127.0.0.1:8188",
     connectionProfile: "",
@@ -579,7 +579,11 @@ async function generateWithComfy(positivePrompt, target = null) {
         const res = await fetch('/api/sd/comfy/workflow', { method: 'POST', headers: getRequestHeaders(), body: JSON.stringify({ file_name: currentName }) });
         if (!res.ok) throw new Error("Load failed");
         workflowRaw = await res.json();
-    } catch (e) { return toastr.error(`Could not load ${currentName}`); }
+    } catch (e) {
+        console.warn(`[${extensionName}] Failed to load workflow from server. Using fallback.`);
+        toastr.warning(`Workflow load failed. Using default fallback.`);
+        workflowRaw = JSON.parse(JSON.stringify(defaultWorkflowData));
+    }
 
     let workflow = (typeof workflowRaw === 'string') ? JSON.parse(workflowRaw) : workflowRaw;
 
@@ -909,6 +913,7 @@ jQuery(async () => {
 // Helpers (Condensed)
 /* --- NEW INJECTION LISTENER --- */
 async function onMessageReceived(id) {
+    await new Promise(r => setTimeout(r, 500));
     // 1. Basic Safety Checks
     if (!extension_settings[extensionName].enabled) return;
     
